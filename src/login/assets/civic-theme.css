@@ -1,0 +1,758 @@
+/* CivicDataSpace Theme for Keycloak */
+
+:root {
+  --civic-primary: #0066cc;
+  --civic-primary-dark: #004d99;
+  --civic-primary-light: #0080ff;
+  --civic-secondary: #ff6600;
+  --civic-secondary-dark: #cc5200;
+  --civic-secondary-light: #ff8533;
+  --civic-success: #28a745;
+  --civic-warning: #ffc107;
+  --civic-danger: #dc3545;
+  --civic-info: #17a2b8;
+  --civic-text: #333333;
+  --civic-text-light: #666666;
+  --civic-background: #f8f9fa;
+  --civic-border: #dee2e6;
+  --civic-white: #ffffff;
+  --civic-black: #000000;
+  --civic-gradient-start: #004d99;
+  --civic-gradient-end: #0080ff;
+  --civic-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Add CivicDataSpace logo */
+.kc-logo-text {
+  background-image: none;
+  height: auto;
+  background-repeat: no-repeat;
+  width: auto;
+  margin: 0 auto;
+}
+
+.kc-logo-text::before {
+  content: 'CivicDataSpace';
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--civic-primary);
+}
+
+/* Typography */
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  color: var(--civic-text);
+  background-color: var(--civic-background-light);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  color: var(--civic-text);
+}
+
+/* Layout */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.card {
+  background-color: var(--civic-white);
+  border-radius: 8px;
+  box-shadow: var(--civic-shadow);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+/* Keycloak specific card styling */
+.login-pf-page .card-pf {
+  background-color: var(--civic-white);
+  border-radius: 8px;
+  box-shadow: var(--civic-shadow);
+  padding: 30px;
+  margin: 0 auto;
+  max-width: 500px;
+  border: none;
+}
+
+/* Login page background */
+.login-pf-page {
+  background: white !important;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Override any background images */
+body, html {
+  background: white !important;
+  background-image: none !important;
+}
+
+/* Header styling - primary color navbar */
+.civic-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: var(--civic-primary) !important;
+  padding: 0;
+  height: 60px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.civic-header-content {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 0 20px;
+  height: 100%;
+}
+
+/* Logo styling */
+.civic-logo-container {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  margin: 0;
+}
+
+.civic-logo-wrapper {
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.civic-logo-text-civic,
+.civic-logo-text-data,
+.civic-logo-text-space {
+  color: white;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+/* Keycloak specific layout */
+#kc-container {
+  background-color: var(--civic-background-light);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#kc-header {
+  padding: 20px 0;
+  background-color: var(--civic-background);
+  border-bottom: 1px solid var(--civic-border);
+}
+
+#kc-header-wrapper {
+  text-align: center;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--civic-primary);
+  padding: 0 20px;
+}
+
+#kc-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+#kc-content-wrapper {
+  width: 100%;
+  max-width: 500px;
+}
+
+#kc-form-wrapper {
+  margin-top: 20px;
+}
+
+#kc-form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 16px 0;
+}
+
+@media (max-width: 768px) {
+  #kc-form-options {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  #kc-form-options > * {
+    margin-bottom: 10px;
+  }
+}
+
+#kc-form-buttons {
+  margin-top: 24px;
+}
+
+.login-pf-page .card-pf {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 30px;
+  background: var(--civic-background);
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.login-pf-page .login-pf-header {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.login-pf-page .login-pf-header h1 {
+  font-size: 24px;
+  color: var(--civic-text);
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+/* Container */
+.login-pf-page {
+  padding-top: 40px;
+}
+
+.card-pf {
+  background-color: var(--civic-background);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: none;
+  padding: 24px;
+}
+
+/* Header */
+.login-pf-header {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.login-pf-header h1 {
+  font-size: 24px;
+  margin-top: 0;
+}
+
+/* Logo */
+.civic-logo {
+  max-width: 200px;
+  margin: 0 auto 24px;
+  display: block;
+}
+
+/* Form Elements */
+.form-control {
+  display: block;
+  width: 100%;
+  height: 46px;
+  padding: 10px 16px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--civic-text);
+  background-color: var(--civic-white);
+  border: 2px solid var(--civic-border);
+  border-radius: 6px;
+  transition: all 0.2s ease-in-out;
+}
+
+.form-control:focus {
+  border-color: var(--civic-primary);
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.25);
+}
+
+/* Keycloak form elements */
+#kc-form-login .form-group {
+  margin-bottom: 20px;
+}
+
+#kc-username, #kc-password {
+  margin-bottom: 24px;
+  width: 100%;
+}
+
+/* Hide realm name */
+#kc-header-wrapper {
+  display: none;
+}
+
+/* Align form fields */
+.login-pf-page .card-pf {
+  margin-top: 60px;
+}
+
+#kc-form-login {
+  width: 100%;
+}
+
+#kc-form-login input {
+  width: 100%;
+}
+
+input[type="text"], input[type="password"], input[type="email"] {
+  height: 46px;
+  padding: 10px 16px;
+  font-size: 16px;
+  border: 2px solid var(--civic-border);
+  border-radius: 6px;
+  transition: all 0.2s ease-in-out;
+}
+
+input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focus {
+  border-color: var(--civic-primary);
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.25);
+}
+
+.control-label {
+  font-weight: 500;
+  margin-bottom: 8px;
+  display: block;
+  font-size: 14px;
+}
+
+/* Keycloak specific form elements */
+#kc-form-login {
+  margin-top: 20px;
+}
+
+#kc-form-buttons {
+  margin-top: 24px;
+}
+
+#kc-form {
+  padding: 0;
+}
+
+#kc-username,
+#kc-password {
+  margin-bottom: 16px;
+}
+
+#kc-content {
+  background-color: var(--civic-background-light);
+}
+
+#kc-container-wrapper {
+  padding-top: 2rem;
+}
+
+#kc-content-wrapper {
+  margin-top: 20px;
+}
+
+#kc-info {
+  margin: 20px 0;
+  color: var(--civic-text-light);
+  font-size: 14px;
+}
+
+#kc-info-wrapper {
+  font-size: 14px;
+}
+
+#kc-form-options {
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+#kc-registration {
+  margin-top: 16px;
+  font-size: 14px;
+}
+
+#kc-registration a {
+  color: var(--civic-primary);
+  text-decoration: none;
+}
+
+#kc-registration a:hover {
+  text-decoration: underline;
+}
+
+/* Button */
+.btn {
+  display: inline-block;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  user-select: none;
+  border: 2px solid transparent;
+  padding: 10px 20px;
+  font-size: 16px;
+  line-height: 1.5;
+  border-radius: 6px;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-primary {
+  color: var(--civic-white);
+  background-color: var(--civic-primary);
+  border-color: var(--civic-primary);
+  box-shadow: 0 2px 4px rgba(0, 102, 204, 0.3);
+}
+
+.btn-primary:hover {
+  background-color: var(--civic-primary-dark);
+  border-color: var(--civic-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 102, 204, 0.4);
+}
+
+.btn-secondary {
+  color: var(--civic-white);
+  background-color: var(--civic-secondary);
+  border-color: var(--civic-secondary);
+  box-shadow: 0 2px 4px rgba(255, 102, 0, 0.3);
+}
+
+.btn-secondary:hover {
+  background-color: var(--civic-secondary-dark);
+  border-color: var(--civic-secondary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(255, 102, 0, 0.4);
+}
+
+/* Keycloak specific buttons */
+#kc-login, #kc-form-buttons .btn-primary {
+  width: 100%;
+  height: 50px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background-color: var(--civic-primary);
+  border-color: var(--civic-primary);
+  box-shadow: 0 2px 4px rgba(0, 102, 204, 0.3);
+  margin-top: 10px;
+}
+
+#kc-login:hover, #kc-form-buttons .btn-primary:hover {
+  background-color: var(--civic-primary-dark);
+  border-color: var(--civic-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 102, 204, 0.4);
+}
+
+/* Keycloak specific buttons */
+#kc-login {
+  width: 100%;
+  height: 44px;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+#kc-form-options span {
+  color: var(--civic-text-light);
+}
+
+#kc-form-options a {
+  color: var(--civic-primary);
+  text-decoration: none;
+}
+
+#kc-form-options a:hover {
+  text-decoration: underline;
+}
+
+.checkbox {
+  margin-top: 16px;
+}
+
+.checkbox label {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+}
+
+.checkbox input[type="checkbox"] {
+  margin-right: 8px;
+}
+
+/* Social Buttons */
+.social-providers {
+  margin-top: 24px;
+}
+
+.social-providers .social-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  text-decoration: none;
+  color: var(--civic-text);
+  background-color: white;
+  border: 1px solid var(--civic-border);
+  border-radius: 4px;
+  padding: 10px 16px;
+  transition: all 0.2s ease-in-out;
+}
+
+.social-providers .social-link:hover {
+  background-color: var(--civic-background-light);
+}
+
+.social-providers .social-link i {
+  margin-right: 8px;
+}
+
+/* Alerts */
+.alert {
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.alert-success {
+  background-color: rgba(40, 167, 69, 0.1);
+  border: 1px solid rgba(40, 167, 69, 0.2);
+  color: var(--civic-success);
+}
+
+.alert-warning {
+  background-color: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.2);
+  color: var(--civic-warning);
+}
+
+.alert-error {
+  background-color: rgba(220, 53, 69, 0.1);
+  border: 1px solid rgba(220, 53, 69, 0.2);
+  color: var(--civic-error);
+}
+
+.alert-info {
+  background-color: rgba(23, 162, 184, 0.1);
+  border: 1px solid rgba(23, 162, 184, 0.2);
+  color: var(--civic-info);
+}
+
+/* Keycloak specific alerts */
+.message-error, 
+.message-warning,
+.message-success,
+.message-info {
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.message-error {
+  background-color: rgba(220, 53, 69, 0.1);
+  border: 1px solid rgba(220, 53, 69, 0.2);
+  color: var(--civic-error);
+}
+
+.message-warning {
+  background-color: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.2);
+  color: var(--civic-warning);
+}
+
+.message-success {
+  background-color: rgba(40, 167, 69, 0.1);
+  border: 1px solid rgba(40, 167, 69, 0.2);
+  color: var(--civic-success);
+}
+
+.message-info {
+  background-color: rgba(23, 162, 184, 0.1);
+  border: 1px solid rgba(23, 162, 184, 0.2);
+  color: var(--civic-info);
+}
+
+.pf-c-alert {
+  margin-bottom: 16px;
+  border-radius: 4px;
+}
+
+.pf-c-alert__title {
+  font-weight: 500;
+}
+
+.instruction {
+  margin-bottom: 16px;
+  color: var(--civic-text-light);
+  font-size: 14px;
+}
+
+/* Links */
+a {
+  color: var(--civic-primary);
+  text-decoration: none;
+  transition: color 0.2s ease-in-out;
+}
+
+a:hover, a:focus {
+  color: var(--civic-primary-dark);
+  text-decoration: underline;
+}
+
+/* Footer */
+.footer {
+  margin-top: 40px;
+  padding: 20px 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--civic-text-light);
+}
+
+.login-pf-footer {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--civic-text-light);
+}
+
+/* Keycloak specific footer */
+#kc-footer {
+  margin-top: 40px;
+  padding: 20px 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--civic-text-light);
+  border-top: 1px solid var(--civic-border);
+}
+
+#kc-footer-wrapper {
+  padding: 0 20px;
+}
+
+#kc-footer a {
+  color: var(--civic-primary);
+  text-decoration: none;
+}
+
+#kc-footer a:hover {
+  text-decoration: underline;
+}
+
+/* Add CivicDataSpace footer */
+#kc-footer-wrapper::after {
+  content: '© 2025 CivicDataSpace. All rights reserved.';
+  display: block;
+  margin-top: 10px;
+}
+
+/* Checkbox */
+/* Checkbox styling */
+.checkbox {
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+.checkbox label {
+  display: flex;
+  align-items: center;
+}
+
+.checkbox input[type="checkbox"] {
+  margin-right: 8px;
+}
+
+/* Fix Remember me alignment */
+#kc-form-options {
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+#kc-form-options .checkbox {
+  margin: 0;
+}
+
+#kc-form-options .checkbox label {
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .login-pf-page {
+    padding: 16px;
+  }
+  
+  .card-pf {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 12px;
+  }
+
+  .card {
+    padding: 16px;
+  }
+  
+  #kc-header-wrapper {
+    font-size: 20px;
+  }
+  
+  #kc-content {
+    padding: 20px 12px;
+  }
+  
+  .login-pf-page .card-pf {
+    padding: 20px;
+    margin: 0 12px;
+  }
+  
+  .form-control {
+    height: 40px;
+  }
+  
+  .btn {
+    height: 40px;
+  }
+  
+  #kc-form-buttons {
+    margin-top: 20px;
+  }
+  
+  #kc-form-options {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  #kc-form-options > * {
+    margin-bottom: 10px;
+  }
+  
+  #kc-registration {
+    margin-top: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  #kc-header-wrapper {
+    font-size: 18px;
+  }
+  
+  .login-pf-page .card-pf {
+    padding: 16px;
+  }
+  
+  .login-pf-page .login-pf-header h1 {
+    font-size: 20px;
+  }
+}
