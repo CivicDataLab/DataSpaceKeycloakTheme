@@ -1,11 +1,11 @@
-import { Suspense, lazy } from "react";
 import type { ClassKey } from "keycloakify/login";
-import type { KcContext } from "./KcContext";
-import { useI18n } from "./i18n";
 import DefaultPage from "keycloakify/login/DefaultPage";
-import Template from "keycloakify/login/Template";
-import CivicLogo from "./components/CivicLogo";
+import { Suspense, lazy } from "react";
+import type { KcContext } from "./KcContext";
 import "./assets/civic-theme.css";
+import CustomTemplate from "./components/CustomTemplate";
+import { useI18n } from "./i18n";
+
 const UserProfileFormFields = lazy(
     () => import("keycloakify/login/UserProfileFormFields")
 );
@@ -27,15 +27,14 @@ export default function KcPage(props: { kcContext: KcContext }) {
                                 kcContext={kcContext}
                                 i18n={i18n}
                                 classes={classes}
-                                Template={(props) => (
-                                    <>
-                                        <div id="kc-header" className="civic-header">
-                                            <div className="civic-header-content">
-                                                <CivicLogo />
-                                            </div>
-                                        </div>
-                                        <Template {...props} />
-                                    </>
+                                Template={(templateProps) => (
+                                    <CustomTemplate 
+                                        kcContext={kcContext}
+                                        socialProvidersNode={templateProps.socialProvidersNode}
+                                        infoNode={templateProps.infoNode}
+                                    >
+                                        {templateProps.children}
+                                    </CustomTemplate>
                                 )}
                                 doUseDefaultCss={true}
                                 UserProfileFormFields={UserProfileFormFields}
@@ -49,16 +48,12 @@ export default function KcPage(props: { kcContext: KcContext }) {
 }
 
 const classes = {
-    kcLoginClass: "civic-login",
-    kcFormGroupClass: "civic-form-group",
-    kcLabelClass: "civic-label",
-    kcInputClass: "civic-input",
-    kcButtonClass: "civic-button",
-    kcButtonPrimaryClass: "civic-button-primary",
-    kcButtonDefaultClass: "civic-button-default",
-    kcButtonLargeClass: "civic-button-large",
-    kcFeedbackErrorIcon: "civic-feedback-error-icon",
-    kcFeedbackWarningIcon: "civic-feedback-warning-icon",
-    kcFeedbackSuccessIcon: "civic-feedback-success-icon",
-    kcFeedbackInfoIcon: "civic-feedback-info-icon",
+    kcLoginClass: "login-pf-page",
+    kcFormGroupClass: "form-group",
+    kcLabelClass: "control-label",
+    kcInputClass: "form-control",
+    kcButtonClass: "btn",
+    kcButtonPrimaryClass: "btn-primary",
+    kcButtonDefaultClass: "btn-default",
+    kcButtonLargeClass: "btn-large",
 } satisfies { [key in ClassKey]?: string };
