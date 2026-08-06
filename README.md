@@ -7,9 +7,10 @@
 # Quick start
 
 ```bash
-git clone https://github.com/keycloakify/keycloakify-starter
-cd keycloakify-starter
+git clone https://github.com/CivicDataLab/DataSpaceKeycloakTheme
+cd DataSpaceKeycloakTheme
 yarn install # Or use an other package manager, just be sure to delete the yarn.lock if you use another package manager.
+yarn storybook
 ```
 
 # Testing the theme locally
