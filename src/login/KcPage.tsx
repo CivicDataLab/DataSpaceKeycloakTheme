@@ -6,9 +6,8 @@ import "./assets/civic-theme.css";
 import CustomTemplate from "./components/CustomTemplate";
 import { useI18n } from "./i18n";
 
-const UserProfileFormFields = lazy(
-    () => import("keycloakify/login/UserProfileFormFields")
-);
+const Login = lazy(() => import("./pages/Login"));
+const UserProfileFormFields = lazy(() => import("./UserProfileFormFields"));
 
 const doMakeUserConfirmPassword = true;
 
@@ -21,6 +20,24 @@ export default function KcPage(props: { kcContext: KcContext }) {
         <Suspense>
             {(() => {
                 switch (kcContext.pageId) {
+                    case "login.ftl":
+                        return (
+                            <Login
+                                kcContext={kcContext}
+                                i18n={i18n}
+                                classes={classes}
+                                Template={(templateProps) => (
+                                    <CustomTemplate
+                                        kcContext={kcContext}
+                                        socialProvidersNode={templateProps.socialProvidersNode}
+                                        infoNode={templateProps.infoNode}
+                                    >
+                                        {templateProps.children}
+                                    </CustomTemplate>
+                                )}
+                                doUseDefaultCss={true}
+                            />
+                        );
                     default:
                         return (
                             <DefaultPage
@@ -28,7 +45,7 @@ export default function KcPage(props: { kcContext: KcContext }) {
                                 i18n={i18n}
                                 classes={classes}
                                 Template={(templateProps) => (
-                                    <CustomTemplate 
+                                    <CustomTemplate
                                         kcContext={kcContext}
                                         socialProvidersNode={templateProps.socialProvidersNode}
                                         infoNode={templateProps.infoNode}

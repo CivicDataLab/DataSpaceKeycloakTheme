@@ -174,25 +174,37 @@ input.error {
 }
 
 .pf-c-form__helper-text.pf-m-error,
-.help-block {
+.help-block,
+#kc-register-form [id^="input-error-"] {
   color: var(--civic-error);
   font-size: 13px;
-  margin-top: 6px;
+  margin-top: 2px !important;
   display: flex;
   align-items: center;
+  gap: 6px;
 }
 
-.pf-c-form__helper-text.pf-m-error::before {
-  content: '⚠';
-  margin-right: 6px;
+.kc-field-error-icon {
+  flex-shrink: 0;
+  display: block;
+  position: relative;
+  top: 1px;
 }
 
 /* Form Options (Remember me, Forgot password) */
-#kc-form-options {
+.login-pf-settings {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin: 16px 0 24px 0;
+  gap: 12px;
+}
+
+#kc-form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0;
 }
 
 .checkbox {
@@ -221,6 +233,7 @@ input.error {
   vertical-align: middle;
 }
 
+.login-pf-settings a,
 #kc-form-options a {
   font-size: 14px;
   color: var(--civic-tertiary-accent);
@@ -228,6 +241,7 @@ input.error {
   transition: color 0.2s ease;
 }
 
+.login-pf-settings a:hover,
 #kc-form-options a:hover {
   color: var(--civic-tertiary-accent-dark);
   text-decoration: underline;
@@ -302,6 +316,52 @@ input[type="submit"]:active {
   border: 1px solid var(--civic-border);
   border-radius: 4px;
   transition: all 0.2s ease;
+}
+
+/* Terms checkbox + label spacing */
+#kc-register-form .form-group:has(#termsAccepted) {
+  margin-top: -10px;
+}
+
+#kc-register-form #termsAccepted {
+  width: 18px;
+  height: 18px;
+  margin: 0 8px 0 0;
+  padding: 0;
+  vertical-align: middle;
+  accent-color: var(--civic-primary-blue);
+  cursor: pointer;
+}
+
+#kc-register-form label[for="termsAccepted"] {
+  display: inline;
+  margin: 0;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+/* Newsletter / profile checkboxes */
+#kc-register-form .pf-c-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+#kc-register-form .pf-c-check__input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  padding: 0;
+  flex-shrink: 0;
+  accent-color: var(--civic-primary-blue);
+  cursor: pointer;
+}
+
+#kc-register-form .pf-c-check__label {
+  margin: 0;
+  cursor: pointer;
+  line-height: 1.2;
 }
 
 /* Back to Login Link */
@@ -382,7 +442,7 @@ select.form-control:focus,
 
 /* Info Text */
 #kc-registration .instruction,
-.pf-c-form__helper-text {
+.pf-c-form__helper-text:not(.pf-m-error) {
   font-size: 13px;
   color: var(--civic-text-light);
   margin-top: 8px;
@@ -393,82 +453,115 @@ select.form-control:focus,
   margin-top: 32px;
 }
 
-/* Divider with text */
-#kc-social-providers hr {
+/* Social OR divider */
+#kc-social-providers hr,
+#kc-social-providers h2,
+#kc-social-providers h4 {
   display: none;
 }
 
-#kc-social-providers h2,
-#kc-social-providers h4 {
-  position: relative;
-  text-align: center;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--civic-text-light);
-  margin: 24px 0 20px 0;
-  padding-top: 24px;
-}
-
-#kc-social-providers h2::before,
-#kc-social-providers h4::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
+.kc-social-divider {
   height: 1px;
+  margin: 24px 0 20px;
   background: var(--civic-border);
+  border: none;
 }
 
-#kc-social-providers h2::after,
-#kc-social-providers h4::after {
-  content: none;
-}
-
-/* Provider list */
+/* Provider list — shared columns so icons/text align while staying centered */
 #kc-social-providers ul {
   list-style: none;
   padding: 0;
   margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: 1fr auto auto 1fr;
+  column-gap: 0;
+  row-gap: 12px;
+  align-items: center;
 }
 
 #kc-social-providers li {
-  margin: 0;
+  display: contents;
 }
 
 /* Provider buttons */
-#kc-social-providers a {
-  display: flex;
+#kc-social-providers a,
+#kc-social-providers a.pf-c-button,
+#kc-social-providers a.pf-m-control {
+  position: static;
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
   align-items: center;
-  justify-content: center;
-  width: 100%;
+  column-gap: 0;
+  row-gap: 0;
+  width: auto;
+  min-height: 48px;
   height: 48px;
-  padding: 12px 24px;
+  padding: 0;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
   color: var(--civic-text-dark);
-  background: var(--civic-white);
-  border: 2px solid var(--civic-border);
+  background: var(--civic-white) !important;
+  border: 1px solid var(--civic-border) !important;
   border-radius: 4px;
   text-decoration: none;
   transition: all 0.2s ease;
+  transform: none;
+  box-shadow: none !important;
 }
 
-#kc-social-providers a:hover {
-  border-color: var(--civic-primary-blue);
-  background: var(--civic-white);
+#kc-social-providers a:hover,
+#kc-social-providers a.pf-c-button:hover,
+#kc-social-providers a.pf-m-control:hover {
+  border-color: var(--civic-primary-blue) !important;
+  background: var(--civic-white) !important;
+  color: var(--civic-text-dark);
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
 }
 
-/* Password Toggle Button */
-.pf-c-button.pf-m-control,
-button[type="button"].pf-c-button,
-.pf-c-input-group button {
+/* Flatten wrapper so icon + label join the shared columns */
+#kc-social-providers .kc-social-provider-content {
+  display: contents;
+}
+
+#kc-social-providers .kc-social-provider-icon-wrap {
+  grid-column: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.kc-social-google-icon,
+.kc-social-provider-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  display: block;
+  overflow: visible;
+}
+
+#kc-social-providers .kc-social-provider-name,
+#kc-social-providers .kc-social-icon-text {
+  grid-column: 3;
+  display: block;
+  margin: 0;
+  padding-left: 12px;
+  line-height: 1.2;
+  text-align: left;
+  white-space: nowrap;
+}
+
+/* Password Toggle Button — scoped to input group only (not social buttons) */
+.pf-c-input-group > .pf-c-button.pf-m-control,
+.pf-c-input-group > button[type="button"],
+.input-group > button[type="button"] {
   position: absolute;
   right: 8px;
   top: 50%;
@@ -482,11 +575,15 @@ button[type="button"].pf-c-button,
   height: auto;
   min-height: auto;
   box-shadow: none !important;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.pf-c-button.pf-m-control:hover,
-button[type="button"].pf-c-button:hover,
-.pf-c-input-group button:hover {
+.pf-c-input-group > .pf-c-button.pf-m-control:hover,
+.pf-c-input-group > button[type="button"]:hover,
+.input-group > button[type="button"]:hover {
   color: var(--civic-primary-blue);
   background: transparent !important;
 }
@@ -532,11 +629,10 @@ button[type="button"].pf-c-button:hover,
   padding: 16px 80px;
   background: #0B3865;
   color: var(--civic-white);
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   font-size: 13px;
-  flex-wrap: wrap;
   gap: 16px;
   min-height: 60px;
 }
@@ -544,6 +640,7 @@ button[type="button"].pf-c-button:hover,
 .civic-footer-links {
   display: flex;
   gap: 24px;
+  justify-self: start;
 }
 
 .civic-footer-links a {
@@ -562,6 +659,8 @@ button[type="button"].pf-c-button:hover,
   display: flex;
   align-items: center;
   gap: 16px;
+  justify-self: end;
+  text-align: right;
 }
 
 .civic-made-by {
@@ -574,6 +673,8 @@ button[type="button"].pf-c-button:hover,
 .civic-social-icons {
   display: flex;
   gap: 12px;
+  justify-self: center;
+  align-items: center;
 }
 
 .civic-social-icon {
@@ -597,7 +698,8 @@ button[type="button"].pf-c-button:hover,
 /* Alert Messages */
 .pf-c-alert,
 .alert {
-  display: flex;
+  display: flex !important;
+  flex-direction: row !important;
   align-items: flex-start;
   gap: 8px;
   padding: 12px 0;
@@ -609,11 +711,16 @@ button[type="button"].pf-c-button:hover,
 
 .pf-c-alert__icon {
   flex-shrink: 0;
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: center;
   line-height: 1.4;
-  margin: 0;
+  margin: 2px 0 0;
+}
+
+.pf-c-alert__icon::before {
+  content: none !important;
+  display: none !important;
 }
 
 .pf-c-alert__title {
@@ -627,6 +734,54 @@ button[type="button"].pf-c-button:hover,
   background-color: rgba(231, 76, 60, 0.1);
   border: 1px solid var(--civic-error);
   color: var(--civic-error);
+}
+
+.pf-c-alert.pf-m-warning,
+.alert-warning {
+  color: var(--civic-text-dark);
+}
+
+/* IdP link confirm — Review profile / Add to existing account */
+#kc-register-form .form-group:has(#updateProfile) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+#kc-register-form #updateProfile,
+#kc-register-form #linkAccount {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  height: 40px;
+  margin: 0;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--civic-text-dark);
+  background: var(--civic-white);
+  border: 1px solid var(--civic-border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#kc-register-form #updateProfile:hover,
+#kc-register-form #linkAccount:hover {
+  border-color: var(--civic-primary-blue);
+  background: var(--civic-white);
+  color: var(--civic-text-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+#kc-register-form #updateProfile:active,
+#kc-register-form #linkAccount:active {
+  transform: translateY(0);
 }
 
 /* Responsive Design */
@@ -647,14 +802,21 @@ button[type="button"].pf-c-button:hover,
   
   .civic-footer {
     padding: 24px 40px;
-    flex-direction: column;
-    gap: 16px;
+    grid-template-columns: 1fr;
+    justify-items: center;
     text-align: center;
+    gap: 16px;
   }
   
   .civic-footer-links {
     flex-direction: column;
     gap: 12px;
+    justify-self: center;
+  }
+
+  .civic-footer-right {
+    justify-self: center;
+    text-align: center;
   }
 }
 
@@ -671,7 +833,8 @@ button[type="button"].pf-c-button:hover,
     padding: 20px 24px;
   }
   
-  #kc-form-options {
+  #kc-form-options,
+  .login-pf-settings {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
