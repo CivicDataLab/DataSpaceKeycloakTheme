@@ -1,9 +1,11 @@
+# .git is deliberately NOT excluded: `keycloakify sync-extensions` shells out
+# to `git ls-files`, and src/email/ is generated rather than tracked, so the
+# build fails with "not a git repository" without it.
 node_modules
 dist
 dist_keycloak
 build
 storybook-static
-.git
 .github
 .storybook
 .vscode
