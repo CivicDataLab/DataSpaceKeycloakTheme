@@ -206,12 +206,28 @@ jobs:
               diff -u docker-compose.yml.prev docker-compose.yml || true
             fi
 
+            # Every deploy leaves a restore point. Rolling the image back does
+            # NOT undo a Keycloak schema migration -- a major upgrade rewrites
+            # the schema via Liquibase and is one-way -- so the image rollback
+            # below is not a complete safety net on its own. The database is
+            # small enough that this costs seconds.
+            mkdir -p .deploy-backups
+            DB_USER=$(grep -E '^DATABASE_USERNAME=' .env | cut -d= -f2-)
+            DB_NAME=$(grep -E '^DATABASE_NAME=' .env | cut -d= -f2-)
+            DUMP=".deploy-backups/pre-deploy-$(date +%Y%m%d-%H%M%S).sql.gz"
+            docker exec keycloak-staging-db pg_dump -U "$DB_USER" -d "$DB_NAME" | gzip > "$DUMP"
+            echo "Database restore point: $DUMP ($(du -h "$DUMP" | cut -f1))"
+            ls -1t .deploy-backups/*.sql.gz | tail -n +6 | xargs -r rm --
+
             docker compose pull "$COMPOSE_SERVICE"
             docker compose up -d --no-deps "$COMPOSE_SERVICE"
 
+            # Generous: a Keycloak major upgrade runs Liquibase schema migration on
+            # first boot, which takes far longer than a restart. Timing out here would
+            # roll back mid-migration.
             echo "Waiting for Keycloak to become ready..."
-            for i in $(seq 1 30); do
-              if curl -sf --max-time 5 http://127.0.0.1:8004/auth/health/ready > /dev/null; then
+            for i in $(seq 1 60); do
+              if curl -sf --max-time 5 http://127.0.0.1:9004/health/ready > /dev/null; then
                 echo "Ready."
                 rm -f docker-compose.yml.prev
                 docker inspect --format \
@@ -234,13 +250,14 @@ jobs:
             if [ -n "$PREVIOUS_IMAGE" ]; then
               KEYCLOAK_IMAGE="$PREVIOUS_IMAGE" docker compose up -d --no-deps "$COMPOSE_SERVICE"
               for i in $(seq 1 30); do
-                if curl -sf --max-time 5 http://127.0.0.1:8004/auth/health/ready > /dev/null; then
+                if curl -sf --max-time 5 http://127.0.0.1:9004/health/ready > /dev/null; then
                   echo "Rollback healthy."
                   exit 1
                 fi
                 sleep 6
               done
               echo "::error::Rollback image also failed to become ready -- needs manual intervention."
+              echo "::error::If this deploy changed the Keycloak major version, the schema has already been migrated and the older image CANNOT start against it. Restore the newest dump in ~/$DEPLOY_PATH/.deploy-backups/ before retrying the previous image."
             else
               echo "::error::No previous image captured -- nothing to roll back to."
             fi

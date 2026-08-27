@@ -44,17 +44,20 @@ services:
       KC_DB_USERNAME: ${DATABASE_USERNAME}
       KC_DB_PASSWORD: ${DATABASE_PASSWORD}
 
-      KC_HOSTNAME_STRICT: false
-      KC_HOSTNAME_STRICT_HTTPS: false
+      # hostname v2 (Keycloak 26 removed v1). As a full URL this pins scheme,
+      # host and context path explicitly instead of resolving them from the
+      # request, which is what makes STRICT safe behind a TLS-terminating proxy.
+      # KC_HOSTNAME_STRICT_HTTPS was removed along with v1.
+      KC_HOSTNAME: https://auth.civicdatalab.in/auth
+      KC_HOSTNAME_STRICT: true
+
       KC_HTTP_ENABLED: true
       KC_LOG_LEVEL: INFO
 
-      # NOTE: KC_BOOTSTRAP_ADMIN_* was introduced in Keycloak 26 and is silently
-      # ignored on 24 -- `kc.sh show-config` echoes it back, which makes it look
-      # like it works. On 24 the names are KEYCLOAK_ADMIN / KEYCLOAK_ADMIN_PASSWORD.
-      # Left as-is deliberately: the admin user already exists in the database, so
-      # changing this now would alter bootstrap behaviour rather than fix anything.
-      # Worth correcting alongside a Keycloak upgrade.
+      # These are the Keycloak 26 names. They were silently ignored on 24 --
+      # `kc.sh show-config` echoed them back, which is what made them look like
+      # they worked and cost an admin recovery on 2026-08-26. They take effect
+      # from this upgrade onward.
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_USER}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_PASSWORD}
 
@@ -66,8 +69,12 @@ services:
       - --optimized
 
     # Bound to loopback; nginx terminates TLS for auth.civicdatalab.in.
+    # 9000 is the management interface (health, metrics) that Keycloak 25 split
+    # out from the application port. The deploy's health gate probes it, so it
+    # has to be published or a healthy deploy would look like a failed one.
     ports:
       - "127.0.0.1:8004:8080"
+      - "127.0.0.1:9004:9000"
 
     depends_on:
       kc_postgres:

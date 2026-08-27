@@ -35,21 +35,32 @@ RUN set -eux; \
 # ---------------------------------------------------------------------------
 # Stage 2 - bake the theme into the Keycloak image.
 # ---------------------------------------------------------------------------
-FROM quay.io/keycloak/keycloak:24.0.0
+FROM quay.io/keycloak/keycloak:26.7.0
 
+# `all-other-versions` is the jar for Keycloak 26+. The other jar Keycloakify
+# emits, `keycloak-theme-for-kc-22-to-25.jar`, bundles a Java extension that
+# 22-25 needed for password policies, which 26 provides natively.
 COPY --from=theme-build \
     /app/dist_keycloak/keycloak-theme-for-kc-all-other-versions.jar \
     /opt/keycloak/providers/
 
-# These are *build-time* options in Keycloak 24. Setting them only in
-# compose `environment:` (as the staging box does today) forces a re-augmentation
-# on every start. They must match what compose passes at runtime, or the server
-# re-augments and the ~16s cost comes straight back.
+# These are *build-time* options. Setting them only in compose `environment:`
+# forces a re-augmentation on every start. They must match what compose passes
+# at runtime, or the server re-augments and the ~16s cost comes straight back.
 ENV KC_DB=postgres \
     KC_HEALTH_ENABLED=true \
     KC_METRICS_ENABLED=true \
-    KC_PROXY=edge \
     KC_HTTP_RELATIVE_PATH=/auth
+
+# `proxy` was deprecated in Keycloak 24 and removed in 26. nginx already sends
+# the X-Forwarded-* headers this relies on.
+ENV KC_PROXY_HEADERS=xforwarded
+
+# Health and metrics moved to management port 9000 in Keycloak 25. Left unset,
+# the management relative path silently inherits http-relative-path and health
+# would sit at /auth/health/ready on 9000 -- pinned to / here so the deploy's
+# probe URL is deterministic rather than inherited.
+ENV KC_HTTP_MANAGEMENT_RELATIVE_PATH=/
 
 # Providers are registered at build time. Without this the augmentation runs on
 # every container start (the ~16s "Quarkus augmentation completed" in the logs)
