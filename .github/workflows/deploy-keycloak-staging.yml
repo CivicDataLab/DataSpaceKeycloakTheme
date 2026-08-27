@@ -1,17 +1,19 @@
 name: Deploy Keycloak theme to staging
 
-# Phase 1: on-demand only. `push: main` is deliberately NOT enabled yet --
-# `main` does not currently carry the theme work that is on
-# `fix/login-ui-alignment`, so auto-deploying it would regress staging.
-# Enable the push trigger once that branch is merged.
+# `dev` is the integration branch for staging: anything merged there is what
+# staging should be running. `main` is deliberately not wired up -- it does not
+# yet carry the theme work, so auto-deploying it would regress staging.
 on:
+  push:
+    branches:
+      - dev
   workflow_dispatch:
     inputs:
       ref:
-        description: "Branch, tag or SHA to build and deploy"
+        description: "Branch, tag or SHA to build and deploy (defaults to dev)"
         type: string
-        required: true
-        default: fix/login-ui-alignment
+        required: false
+        default: dev
 
 concurrency:
   group: keycloak-staging-deploy
@@ -38,10 +40,12 @@ jobs:
       image_ref: ${{ steps.push.outputs.image_ref }}
       theme_jar_sha256: ${{ steps.jar.outputs.sha256 }}
     steps:
-      - name: Checkout ${{ inputs.ref }}
+      # On a push this is the pushed commit; on a manual run it is whatever
+      # ref was asked for.
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ inputs.ref || github.sha }}
 
       - name: Resolve commit SHA
         id: commit
