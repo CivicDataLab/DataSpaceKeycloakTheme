@@ -1,0 +1,187 @@
+name: Deploy Keycloak theme to staging
+
+# Phase 1: on-demand only. `push: main` is deliberately NOT enabled yet --
+# `main` does not currently carry the theme work that is on
+# `fix/login-ui-alignment`, so auto-deploying it would regress staging.
+# Enable the push trigger once that branch is merged.
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch, tag or SHA to build and deploy"
+        type: string
+        required: true
+        default: fix/login-ui-alignment
+
+concurrency:
+  group: keycloak-staging-deploy
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  DEPLOY_PATH: keycloak
+  COMPOSE_SERVICE: keycloak
+  CONTAINER_NAME: keycloak-staging
+
+jobs:
+  build:
+    name: Build & push image
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_ref: ${{ steps.push.outputs.image_ref }}
+      theme_jar_sha256: ${{ steps.jar.outputs.sha256 }}
+    steps:
+      - name: Checkout ${{ inputs.ref }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Resolve commit SHA
+        id: commit
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build the theme stage on its own first so the jar's sha256 can be read
+      # out and baked into the final image as a label. This is the whole point:
+      # "which theme is this box running" becomes one `docker inspect`.
+      - name: Build theme stage and extract jar sha256
+        id: jar
+        run: |
+          set -euo pipefail
+          docker buildx build \
+            --platform linux/amd64 \
+            --target theme-build \
+            --cache-from type=gha \
+            --cache-to type=gha,mode=max \
+            --load -t theme-build:ci .
+          docker create --name themejar theme-build:ci > /dev/null
+          docker cp themejar:/app/dist_keycloak ./dist_keycloak
+          docker rm themejar > /dev/null
+
+          JAR=dist_keycloak/keycloak-theme-for-kc-all-other-versions.jar
+          test -f "$JAR"
+          SHA=$(sha256sum "$JAR" | cut -d' ' -f1)
+          SIZE=$(stat -c%s "$JAR")
+          echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
+
+          echo "### Theme jar" >> "$GITHUB_STEP_SUMMARY"
+          echo "- file: \`$(basename "$JAR")\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- sha256: \`$SHA\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- size: $SIZE bytes" >> "$GITHUB_STEP_SUMMARY"
+          ls -l dist_keycloak
+
+          # Production's canonical jar is 2,351,205 bytes. A different build will
+          # never match byte-for-byte, but an order-of-magnitude difference means
+          # the build produced something other than this theme.
+          if [ "$SIZE" -lt 1500000 ] || [ "$SIZE" -gt 4000000 ]; then
+            echo "::error::theme jar is $SIZE bytes, far outside the expected ~2.3MB. Refusing to deploy."
+            exit 1
+          fi
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=staging
+            type=raw,value=sha-${{ steps.commit.outputs.sha }}
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            GIT_COMMIT_SHA=${{ steps.commit.outputs.sha }}
+            THEME_JAR_SHA256=${{ steps.jar.outputs.sha256 }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Pin image by digest
+        id: push
+        run: |
+          echo "image_ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    name: Deploy to staging
+    needs: build
+    runs-on: ubuntu-latest
+    environment: keycloak-staging
+    timeout-minutes: 15
+
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          KEYCLOAK_IMAGE: ${{ needs.build.outputs.image_ref }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          GHCR_ACTOR: ${{ github.actor }}
+          DEPLOY_PATH: ${{ env.DEPLOY_PATH }}
+          COMPOSE_SERVICE: ${{ env.COMPOSE_SERVICE }}
+          CONTAINER_NAME: ${{ env.CONTAINER_NAME }}
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          envs: KEYCLOAK_IMAGE,GHCR_TOKEN,GHCR_ACTOR,DEPLOY_PATH,COMPOSE_SERVICE,CONTAINER_NAME
+          command_timeout: 12m
+          script: |
+            set -euo pipefail
+            cd "$HOME/$DEPLOY_PATH"
+
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_ACTOR" --password-stdin
+
+            # Roll back to the exact image that is running now, not to a moving
+            # tag -- ":staging" will already point at the new build by then.
+            PREVIOUS_IMAGE=$(docker inspect --format='{{.Image}}' "$CONTAINER_NAME" 2>/dev/null || echo "")
+            echo "Currently running image id: ${PREVIOUS_IMAGE:-<none>}"
+
+            docker compose pull "$COMPOSE_SERVICE"
+            docker compose up -d --no-deps "$COMPOSE_SERVICE"
+
+            echo "Waiting for Keycloak to become ready..."
+            for i in $(seq 1 30); do
+              if curl -sf --max-time 5 http://127.0.0.1:8004/auth/health/ready > /dev/null; then
+                echo "Ready."
+                docker inspect --format \
+                  'commit={{index .Config.Labels "org.opencontainers.image.revision"}} theme_jar_sha256={{index .Config.Labels "in.civicdatalab.theme.jar.sha256"}}' \
+                  "$CONTAINER_NAME"
+                exit 0
+              fi
+              sleep 6
+            done
+
+            echo "::error::Keycloak did not become ready after deploy -- rolling back."
+            if [ -n "$PREVIOUS_IMAGE" ]; then
+              KEYCLOAK_IMAGE="$PREVIOUS_IMAGE" docker compose up -d --no-deps "$COMPOSE_SERVICE"
+              for i in $(seq 1 30); do
+                if curl -sf --max-time 5 http://127.0.0.1:8004/auth/health/ready > /dev/null; then
+                  echo "Rollback healthy."
+                  exit 1
+                fi
+                sleep 6
+              done
+              echo "::error::Rollback image also failed to become ready -- needs manual intervention."
+            else
+              echo "::error::No previous image captured -- nothing to roll back to."
+            fi
+            exit 1
