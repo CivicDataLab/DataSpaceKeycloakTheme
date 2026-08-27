@@ -1,0 +1,78 @@
+# Staging Keycloak stack (auth.civicdatalab.in).
+#
+# This file is the source of truth. deploy-keycloak-staging.yml copies it to
+# ~/keycloak/docker-compose.yml on the staging box on every deploy, so the box
+# holds nothing hand-written and a change here goes through a PR like any other.
+#
+# Secrets stay in ~/keycloak/.env on the box and are never committed: it supplies
+# DATABASE_NAME, DATABASE_USERNAME, DATABASE_PASSWORD, KEYCLOAK_USER,
+# KEYCLOAK_PASSWORD and KC_HOSTNAME.
+
+services:
+  kc_postgres:
+    image: postgres:15
+    env_file: .env
+    container_name: keycloak-staging-db
+    restart: unless-stopped
+
+    volumes:
+      - kc_postgres_data:/var/lib/postgresql/data
+
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USERNAME} -d ${DATABASE_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    # Built and pushed by .github/workflows/deploy-keycloak-staging.yml.
+    # Deliberately no `build:` here -- with both, `docker compose up --build`
+    # would silently replace the CI-built image with a local build and the
+    # running server would stop corresponding to any commit.
+    image: ${KEYCLOAK_IMAGE:-ghcr.io/civicdatalab/dataspacekeycloaktheme:staging}
+    env_file: .env
+    container_name: keycloak-staging
+    restart: unless-stopped
+
+    environment:
+      KC_DB_URL: jdbc:postgresql://kc_postgres:5432/${DATABASE_NAME}
+      KC_DB_USERNAME: ${DATABASE_USERNAME}
+      KC_DB_PASSWORD: ${DATABASE_PASSWORD}
+
+      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT_HTTPS: false
+      KC_HTTP_ENABLED: true
+      KC_LOG_LEVEL: INFO
+
+      # NOTE: KC_BOOTSTRAP_ADMIN_* was introduced in Keycloak 26 and is silently
+      # ignored on 24 -- `kc.sh show-config` echoes it back, which makes it look
+      # like it works. On 24 the names are KEYCLOAK_ADMIN / KEYCLOAK_ADMIN_PASSWORD.
+      # Left as-is deliberately: the admin user already exists in the database, so
+      # changing this now would alter bootstrap behaviour rather than fix anything.
+      # Worth correcting alongside a Keycloak upgrade.
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_USER}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_PASSWORD}
+
+    # --optimized asserts the image was already built with kc.sh build and
+    # refuses to silently re-augment. The build-time options (db, proxy,
+    # http-relative-path, health, metrics) are baked into the image instead.
+    command:
+      - start
+      - --optimized
+
+    # Bound to loopback; nginx terminates TLS for auth.civicdatalab.in.
+    ports:
+      - "127.0.0.1:8004:8080"
+
+    depends_on:
+      kc_postgres:
+        condition: service_healthy
+
+volumes:
+  kc_postgres_data:
+    driver: local
