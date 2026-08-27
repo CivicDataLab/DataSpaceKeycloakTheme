@@ -49,7 +49,7 @@ ENV KC_DB=postgres \
     KC_HEALTH_ENABLED=true \
     KC_METRICS_ENABLED=true \
     KC_PROXY=edge \
-    KC_HTTP_RELATIVE_PATH=/auth
+    KC_HTTP_RELATIVE_PATH=/auth-rollback-test
 
 # Providers are registered at build time. Without this the augmentation runs on
 # every container start (the ~16s "Quarkus augmentation completed" in the logs)
