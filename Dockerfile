@@ -41,13 +41,14 @@ COPY --from=theme-build \
     /app/dist_keycloak/keycloak-theme-for-kc-all-other-versions.jar \
     /opt/keycloak/providers/
 
-# These four are *build-time* options in Keycloak 24. Setting them only in
+# These are *build-time* options in Keycloak 24. Setting them only in
 # compose `environment:` (as the staging box does today) forces a re-augmentation
 # on every start. They must match what compose passes at runtime, or the server
 # re-augments and the ~16s cost comes straight back.
 ENV KC_DB=postgres \
     KC_HEALTH_ENABLED=true \
     KC_METRICS_ENABLED=true \
+    KC_PROXY=edge \
     KC_HTTP_RELATIVE_PATH=/auth
 
 # Providers are registered at build time. Without this the augmentation runs on
