@@ -127,13 +127,19 @@ jobs:
     runs-on: ubuntu-latest
     environment: keycloak-staging
     timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: read
 
     steps:
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1.0.3
         env:
           KEYCLOAK_IMAGE: ${{ needs.build.outputs.image_ref }}
-          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          # This job's own GITHUB_TOKEN, not a long-lived PAT. It is valid only
+          # for the life of this run, so the box holds no standing registry
+          # credential -- and there is one fewer secret to rotate.
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GHCR_ACTOR: ${{ github.actor }}
           DEPLOY_PATH: ${{ env.DEPLOY_PATH }}
           COMPOSE_SERVICE: ${{ env.COMPOSE_SERVICE }}
@@ -149,6 +155,7 @@ jobs:
             cd "$HOME/$DEPLOY_PATH"
 
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_ACTOR" --password-stdin
+            trap 'docker logout ghcr.io >/dev/null 2>&1 || true' EXIT
 
             # Roll back to the exact image that is running now, not to a moving
             # tag -- ":staging" will already point at the new build by then.
