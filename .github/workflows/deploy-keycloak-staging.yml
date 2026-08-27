@@ -19,7 +19,9 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  # Lowercased: github.repository is mixed-case and Docker rejects
+  # uppercase in image names.
+  IMAGE_NAME: civicdatalab/dataspacekeycloaktheme
   DEPLOY_PATH: keycloak
   COMPOSE_SERVICE: keycloak
   CONTAINER_NAME: keycloak-staging
