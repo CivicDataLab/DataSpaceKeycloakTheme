@@ -2,15 +2,21 @@ import React from "react";
 import { IconAlertCircle, IconInfoCircle } from "@tabler/icons-react";
 import CivicFooter from "./CivicFooter";
 import CivicLogo from "./CivicLogo";
+import { getPrivacyHref } from "../getPrivacyHref";
+import type { I18n } from "../i18n";
 
-type CustomTemplateProps = {
+export type CustomTemplateProps = {
     children: React.ReactNode;
     socialProvidersNode?: React.ReactNode;
     infoNode?: React.ReactNode;
+    i18n: I18n;
     kcContext: {
         message?: {
             type: string;
             summary: string;
+        };
+        client?: {
+            baseUrl?: string;
         };
     };
     displayMessage?: boolean;
@@ -20,9 +26,13 @@ export default function CustomTemplate({
     children,
     socialProvidersNode,
     infoNode,
+    i18n,
     kcContext,
     displayMessage = true
 }: CustomTemplateProps) {
+    const { msg } = i18n;
+    const privacyHref = getPrivacyHref(kcContext.client?.baseUrl);
+
     return (
         <>
             <div className="civic-split-wrapper">
@@ -65,6 +75,11 @@ export default function CustomTemplate({
                 {/* Right Panel with Logo */}
                 <div className="civic-brand-panel">
                     <CivicLogo />
+                    <div className="civic-legal-links">
+                        <a href={privacyHref} target="_blank" rel="noopener noreferrer">
+                            {msg("privacy")}
+                        </a>
+                    </div>
                 </div>
             </div>
 

@@ -3,10 +3,11 @@ import DefaultPage from "keycloakify/login/DefaultPage";
 import { Suspense, lazy } from "react";
 import type { KcContext } from "./KcContext";
 import "./assets/civic-theme.css";
-import CustomTemplate from "./components/CustomTemplate";
+import CustomTemplate, { type CustomTemplateProps } from "./components/CustomTemplate";
 import { useI18n } from "./i18n";
 
 const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
 const UserProfileFormFields = lazy(() => import("./UserProfileFormFields"));
 
 const doMakeUserConfirmPassword = true;
@@ -15,6 +16,10 @@ export default function KcPage(props: { kcContext: KcContext }) {
     const { kcContext } = props;
 
     const { i18n } = useI18n({ kcContext });
+
+    const Template = (props: Omit<CustomTemplateProps, "kcContext">) => (
+        <CustomTemplate {...props} kcContext={kcContext} />
+    );
 
     return (
         <Suspense>
@@ -26,16 +31,20 @@ export default function KcPage(props: { kcContext: KcContext }) {
                                 kcContext={kcContext}
                                 i18n={i18n}
                                 classes={classes}
-                                Template={(templateProps) => (
-                                    <CustomTemplate
-                                        kcContext={kcContext}
-                                        socialProvidersNode={templateProps.socialProvidersNode}
-                                        infoNode={templateProps.infoNode}
-                                    >
-                                        {templateProps.children}
-                                    </CustomTemplate>
-                                )}
+                                Template={Template}
                                 doUseDefaultCss={true}
+                            />
+                        );
+                    case "register.ftl":
+                        return (
+                            <Register
+                                kcContext={kcContext}
+                                i18n={i18n}
+                                classes={classes}
+                                Template={Template}
+                                doUseDefaultCss={true}
+                                UserProfileFormFields={UserProfileFormFields}
+                                doMakeUserConfirmPassword={doMakeUserConfirmPassword}
                             />
                         );
                     default:
@@ -44,15 +53,7 @@ export default function KcPage(props: { kcContext: KcContext }) {
                                 kcContext={kcContext}
                                 i18n={i18n}
                                 classes={classes}
-                                Template={(templateProps) => (
-                                    <CustomTemplate
-                                        kcContext={kcContext}
-                                        socialProvidersNode={templateProps.socialProvidersNode}
-                                        infoNode={templateProps.infoNode}
-                                    >
-                                        {templateProps.children}
-                                    </CustomTemplate>
-                                )}
+                                Template={Template}
                                 doUseDefaultCss={true}
                                 UserProfileFormFields={UserProfileFormFields}
                                 doMakeUserConfirmPassword={doMakeUserConfirmPassword}
