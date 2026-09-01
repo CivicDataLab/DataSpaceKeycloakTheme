@@ -48,7 +48,7 @@ services:
       # host and context path explicitly instead of resolving them from the
       # request, which is what makes STRICT safe behind a TLS-terminating proxy.
       # KC_HOSTNAME_STRICT_HTTPS was removed along with v1.
-      KC_HOSTNAME: https://auth.civicdatalab.in/auth
+      KC_HOSTNAME: https://auth.civicdatalab.in
       KC_HOSTNAME_STRICT: true
 
       KC_HTTP_ENABLED: true
