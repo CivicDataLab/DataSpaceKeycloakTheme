@@ -102,6 +102,25 @@ body, html {
   text-align: center;
 }
 
+.civic-legal-links {
+  position: absolute;
+  right: 32px;
+  bottom: 24px;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+
+.civic-legal-links a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.civic-legal-links a:hover {
+  color: var(--civic-white);
+}
+
 /* Form Container */
 .card-pf {
   background: transparent;
@@ -318,25 +337,22 @@ input[type="submit"]:active {
   transition: all 0.2s ease;
 }
 
-/* Terms checkbox + label spacing */
-#kc-register-form .form-group:has(#termsAccepted) {
-  margin-top: -10px;
+#kc-register-form .civic-terms {
+  max-width: 100%;
 }
 
-#kc-register-form #termsAccepted {
-  width: 18px;
-  height: 18px;
-  margin: 0 8px 0 0;
+#kc-register-form .civic-terms .pf-c-check__label {
+  min-width: 0;
+}
+
+#kc-register-form .civic-terms a {
+  border: none;
+  background: none;
   padding: 0;
-  vertical-align: middle;
-  accent-color: var(--civic-primary-blue);
-  cursor: pointer;
-}
-
-#kc-register-form label[for="termsAccepted"] {
-  display: inline;
-  margin: 0;
-  vertical-align: middle;
+  font: inherit;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
   cursor: pointer;
 }
 
