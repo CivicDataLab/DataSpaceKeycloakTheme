@@ -50,6 +50,7 @@ export default function Register(props: RegisterProps) {
             doUseDefaultCss={doUseDefaultCss}
             classes={classes}
             displayMessage={messagesPerField.exists("global")}
+            headerNode={null}
         >
             <form id="kc-register-form" className={kcClsx("kcFormClass")} action={url.registrationAction} method="post">
                 <UserProfileFormFields
