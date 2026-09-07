@@ -262,3 +262,31 @@ jobs:
               echo "::error::No previous image captured -- nothing to roll back to."
             fi
             exit 1
+
+  # The theme ships independently of the app, so a theme change can break sign-in
+  # while nothing in the product repos moves and every product pipeline stays green.
+  # The deploy's own gate only proves Keycloak booted (/health/ready) — not that a
+  # user can still reach the login page, that "Continue With Google" is rendered, or
+  # that the privacy links the theme builds still resolve.
+  #
+  # Calls the test repo's reusable workflow directly rather than firing a
+  # repository_dispatch: dispatching across repositories needs a PAT with `repo`
+  # scope stored here, and this needs no new secret. The listener also accepts
+  # repository_dispatch if a token is ever preferred.
+  #
+  # Deliberately not gating the deploy: by the time this runs the theme is already
+  # live, and Keycloak cannot be rolled back automatically once a major version has
+  # migrated the schema. A red run here is a signal to look, not an automatic revert.
+  keycloak-tests:
+    name: Keycloak tests
+    needs: deploy
+    if: success()
+    uses: CivicDataLab/CivicDataSpace-test/.github/workflows/keycloak-tests.yml@CI
+    with:
+      keycloak_url: https://auth.civicdatalab.in
+      app_base_url: https://dev.civicdataspace.in
+    secrets:
+      HOME_URL_DEV: ${{ secrets.HOME_URL_DEV }}
+      # Optional. Present -> the registration tests also run; absent -> they skip,
+      # because they create real accounts and must be able to delete them.
+      KEYCLOAK_CLIENT_SECRET: ${{ secrets.KEYCLOAK_CLIENT_SECRET }}
