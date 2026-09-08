@@ -2,7 +2,7 @@
 
 [![deploy](https://img.shields.io/github/actions/workflow/status/CivicDataLab/DataSpaceKeycloakTheme/deploy-keycloak-staging.yml?branch=main&label=deploy&logo=githubactions&logoColor=white)](https://github.com/CivicDataLab/DataSpaceKeycloakTheme/actions/workflows/deploy-keycloak-staging.yml)
 [![ci](https://img.shields.io/github/actions/workflow/status/CivicDataLab/DataSpaceKeycloakTheme/ci.yaml?branch=main&label=ci&logo=githubactions&logoColor=white)](https://github.com/CivicDataLab/DataSpaceKeycloakTheme/actions/workflows/ci.yaml)
-[![auth tests](https://img.shields.io/github/actions/workflow/status/CivicDataLab/DataSpaceKeycloakTheme/auth-tests.yml?branch=main&label=auth%20tests&logo=githubactions&logoColor=white)](https://github.com/CivicDataLab/DataSpaceKeycloakTheme/actions/workflows/auth-tests.yml)
+[![keycloak tests](https://img.shields.io/github/actions/workflow/status/CivicDataLab/DataSpaceKeycloakTheme/auth-tests.yml?branch=main&label=keycloak%20tests&logo=githubactions&logoColor=white)](https://github.com/CivicDataLab/DataSpaceKeycloakTheme/actions/workflows/auth-tests.yml)
 [![deploys to](https://img.shields.io/badge/deploys%20to-auth.civicdatalab.in-0A7D33)](https://auth.civicdatalab.in/realms/DataSpace)
 [![Keycloak](https://img.shields.io/badge/Keycloak-26.7.0-4D4D4D)](https://www.keycloak.org/)
 [![Keycloakify](https://img.shields.io/badge/Keycloakify-v11-4D4D4D)](https://keycloakify.dev)
@@ -54,7 +54,7 @@ PR ──► dev ─────────────────────
 
 ### Checked between deploys, too
 
-`auth-tests.yml` runs the same checks on a schedule (every 6 hours) rather than
+The **Keycloak tests** (`auth-tests.yml`) run the same checks on a schedule (every 6 hours) rather than
 only after a deploy. `auth.civicdatalab.in` can break with no deploy involved -
 a client setting changed in the admin console, a certificate expiring, Google
 rotating an identity-provider credential, the box filling its disk. None of that
