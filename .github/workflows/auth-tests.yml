@@ -1,0 +1,48 @@
+# Keycloak auth checks, run on a schedule rather than only after a deploy.
+#
+# The post-deploy tests in deploy-keycloak-staging.yml only prove the theme was
+# healthy at the moment it shipped. auth.civicdatalab.in can break without any
+# deploy happening: a realm or client setting changed in the admin console, a
+# certificate expiring, an identity provider (Google) rotating credentials, the
+# box running out of disk. None of that touches this repository, so nothing
+# would notice until the next theme change - which could be weeks.
+#
+# This runs the same tests independently, so a break is found in hours rather
+# than at the next deploy. It also gives the tests a real run history, which a
+# reusable workflow called from a deploy does not have: those runs are recorded
+# against the CALLER, so there is nothing to point a status badge at.
+#
+# Deploys nothing. Read-only against the live server.
+
+name: Auth tests
+
+on:
+  schedule:
+    # Every 6 hours. Frequent enough that a break is caught the same working
+    # day, infrequent enough not to be noise. Times are UTC.
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      keycloak_url:
+        description: 'Keycloak base URL to test'
+        type: string
+        required: false
+        default: 'https://auth.civicdatalab.in'
+
+concurrency:
+  group: auth-tests
+  cancel-in-progress: true
+
+jobs:
+  auth:
+    name: Auth pages
+    uses: CivicDataLab/CivicDataSpace-test/.github/workflows/keycloak-tests.yml@CI
+    with:
+      keycloak_url: ${{ inputs.keycloak_url || 'https://auth.civicdatalab.in' }}
+      app_base_url: https://dev.civicdataspace.in
+      api_base_url: https://dev.api.civicdataspace.in
+    secrets:
+      HOME_URL_DEV: ${{ secrets.HOME_URL_DEV }}
+      # Optional. Present -> the registration tests run too; absent -> they skip,
+      # because they create real accounts and must be able to delete them.
+      KEYCLOAK_CLIENT_SECRET: ${{ secrets.KEYCLOAK_CLIENT_SECRET }}
