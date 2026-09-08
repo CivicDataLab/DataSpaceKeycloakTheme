@@ -149,11 +149,19 @@ jobs:
     name: Deploy to production
     needs: build
     runs-on: ubuntu-latest
-    # Kept as keycloak-staging on purpose: EC2_HOST, EC2_USERNAME and
-    # EC2_PRIVATE_KEY are scoped to this environment, and GitHub cannot rename an
-    # environment while preserving its secrets. Renaming would strip the deploy's
-    # SSH key. Rename only alongside re-adding those three secrets.
-    environment: keycloak-staging
+    # keycloak-production, not keycloak-staging: auth.civicdatalab.in serves
+    # production auth for every CivicDataLab product.
+    #
+    # GitHub cannot move secrets between environments, so this could only change
+    # once EC2_HOST, EC2_USERNAME and EC2_PRIVATE_KEY had been added to the new
+    # environment. They have been. keycloak-staging is deliberately left in place
+    # until a deploy has succeeded from here -- a missing secret surfaces as an
+    # opaque ssh auth failure, not as "secret not found", so the ability to flip
+    # back in one line is worth keeping for a release or two.
+    #
+    # This environment is also where a required reviewer would be configured if
+    # production deploys should need approval.
+    environment: keycloak-production
     timeout-minutes: 15
     permissions:
       contents: read
