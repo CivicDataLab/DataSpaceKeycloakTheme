@@ -1,0 +1,314 @@
+name: Deploy Keycloak theme to production
+
+# auth.civicdatalab.in is PRODUCTION. It is the auth server for CivicDataSpace
+# (dev and prod), ParakhAI (dev and prod), Analytics (dev and prod) and the
+# DRR-hosted DataSpace. An outage here signs every user out of every product.
+#
+# `main` is therefore the deploying branch: work lands on `dev`, is reviewed, and
+# only reaches users when it is merged to `main`. Pushing to `dev` no longer
+# deploys.
+#
+# workflow_dispatch only appears once this file exists on the DEFAULT branch --
+# that is why it has never been usable here (see CivicDataSpace-test#30 for the
+# same defect in two other repos).
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch, tag or SHA to build and deploy (defaults to main)"
+        type: string
+        required: false
+        default: main
+
+concurrency:
+  group: keycloak-staging-deploy
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  # Lowercased: github.repository is mixed-case and Docker rejects
+  # uppercase in image names.
+  IMAGE_NAME: civicdatalab/dataspacekeycloaktheme
+  # These four are deliberately NOT renamed despite this being production now.
+  #
+  # CONTAINER_NAME must match the running container: change it and compose
+  # creates a second one and orphans the live server. DEPLOY_PATH is the
+  # directory on the box. The compose file's volume (kc_postgres_data) is the
+  # same story but worse -- a renamed volume gives Keycloak an EMPTY database,
+  # losing every realm, client and user.
+  #
+  # The names say "staging" for historical reasons. That is cosmetic. Renaming
+  # them is an auth outage for every CivicDataLab product.
+  DEPLOY_PATH: keycloak
+  COMPOSE_SERVICE: keycloak
+  CONTAINER_NAME: keycloak-staging
+
+jobs:
+  build:
+    name: Build & push image
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_ref: ${{ steps.push.outputs.image_ref }}
+      theme_jar_sha256: ${{ steps.jar.outputs.sha256 }}
+    steps:
+      # On a push this is the pushed commit; on a manual run it is whatever
+      # ref was asked for.
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+
+      - name: Resolve commit SHA
+        id: commit
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build the theme stage on its own first so the jar's sha256 can be read
+      # out and baked into the final image as a label. This is the whole point:
+      # "which theme is this box running" becomes one `docker inspect`.
+      - name: Build theme stage and extract jar sha256
+        id: jar
+        run: |
+          set -euo pipefail
+          docker buildx build \
+            --platform linux/amd64 \
+            --target theme-build \
+            --cache-from type=gha \
+            --cache-to type=gha,mode=max \
+            --load -t theme-build:ci .
+          docker create --name themejar theme-build:ci > /dev/null
+          docker cp themejar:/app/dist_keycloak ./dist_keycloak
+          docker rm themejar > /dev/null
+
+          JAR=dist_keycloak/keycloak-theme-for-kc-all-other-versions.jar
+          test -f "$JAR"
+          SHA=$(sha256sum "$JAR" | cut -d' ' -f1)
+          SIZE=$(stat -c%s "$JAR")
+          echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
+
+          echo "### Theme jar" >> "$GITHUB_STEP_SUMMARY"
+          echo "- file: \`$(basename "$JAR")\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- sha256: \`$SHA\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- size: $SIZE bytes" >> "$GITHUB_STEP_SUMMARY"
+          ls -l dist_keycloak
+
+          # Production's canonical jar is 2,351,205 bytes. A different build will
+          # never match byte-for-byte, but an order-of-magnitude difference means
+          # the build produced something other than this theme.
+          if [ "$SIZE" -lt 1500000 ] || [ "$SIZE" -gt 4000000 ]; then
+            echo "::error::theme jar is $SIZE bytes, far outside the expected ~2.3MB. Refusing to deploy."
+            exit 1
+          fi
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=staging
+            type=raw,value=sha-${{ steps.commit.outputs.sha }}
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            GIT_COMMIT_SHA=${{ steps.commit.outputs.sha }}
+            THEME_JAR_SHA256=${{ steps.jar.outputs.sha256 }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Pin image by digest
+        id: push
+        run: |
+          echo "image_ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    name: Deploy to production
+    needs: build
+    runs-on: ubuntu-latest
+    # Kept as keycloak-staging on purpose: EC2_HOST, EC2_USERNAME and
+    # EC2_PRIVATE_KEY are scoped to this environment, and GitHub cannot rename an
+    # environment while preserving its secrets. Renaming would strip the deploy's
+    # SSH key. Rename only alongside re-adding those three secrets.
+    environment: keycloak-staging
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+
+      # The compose file is version-controlled and shipped on every deploy, so
+      # the box holds no hand-edited config. It lands beside the live one and is
+      # only swapped in (with a backup) once the script has validated it.
+      - name: Ship the compose file
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          source: deploy/docker-compose.staging.yml
+          target: ${{ env.DEPLOY_PATH }}
+          strip_components: 1
+
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          KEYCLOAK_IMAGE: ${{ needs.build.outputs.image_ref }}
+          # This job's own GITHUB_TOKEN, not a long-lived PAT. It is valid only
+          # for the life of this run, so the box holds no standing registry
+          # credential -- and there is one fewer secret to rotate.
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_ACTOR: ${{ github.actor }}
+          DEPLOY_PATH: ${{ env.DEPLOY_PATH }}
+          COMPOSE_SERVICE: ${{ env.COMPOSE_SERVICE }}
+          CONTAINER_NAME: ${{ env.CONTAINER_NAME }}
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          envs: KEYCLOAK_IMAGE,GHCR_TOKEN,GHCR_ACTOR,DEPLOY_PATH,COMPOSE_SERVICE,CONTAINER_NAME
+          command_timeout: 12m
+          script: |
+            set -euo pipefail
+            cd "$HOME/$DEPLOY_PATH"
+
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_ACTOR" --password-stdin
+            trap 'docker logout ghcr.io >/dev/null 2>&1 || true' EXIT
+
+            # Roll back to the exact image that is running now, not to a moving
+            # tag -- ":staging" will already point at the new build by then.
+            PREVIOUS_IMAGE=$(docker inspect --format='{{.Image}}' "$CONTAINER_NAME" 2>/dev/null || echo "")
+            echo "Currently running image id: ${PREVIOUS_IMAGE:-<none>}"
+
+            # Swap in the shipped compose file, keeping the live one so a bad
+            # compose change can be undone as well as a bad image. Rollback runs
+            # `docker compose up`, so it needs a compose file it can parse.
+            if [ -f docker-compose.yml ]; then
+              cp docker-compose.yml docker-compose.yml.prev
+            fi
+            mv docker-compose.staging.yml docker-compose.yml
+
+            if ! docker compose config > /dev/null 2>&1; then
+              echo "::error::shipped docker-compose.yml is invalid -- restoring the previous one and aborting before anything is touched."
+              docker compose config || true
+              [ -f docker-compose.yml.prev ] && mv docker-compose.yml.prev docker-compose.yml
+              exit 1
+            fi
+
+            if [ -f docker-compose.yml.prev ] && ! diff -q docker-compose.yml.prev docker-compose.yml > /dev/null; then
+              echo "compose file changed in this deploy:"
+              diff -u docker-compose.yml.prev docker-compose.yml || true
+            fi
+
+            # Every deploy leaves a restore point. Rolling the image back does
+            # NOT undo a Keycloak schema migration -- a major upgrade rewrites
+            # the schema via Liquibase and is one-way -- so the image rollback
+            # below is not a complete safety net on its own. The database is
+            # small enough that this costs seconds.
+            mkdir -p .deploy-backups
+            DB_USER=$(grep -E '^DATABASE_USERNAME=' .env | cut -d= -f2-)
+            DB_NAME=$(grep -E '^DATABASE_NAME=' .env | cut -d= -f2-)
+            DUMP=".deploy-backups/pre-deploy-$(date +%Y%m%d-%H%M%S).sql.gz"
+            docker exec keycloak-staging-db pg_dump -U "$DB_USER" -d "$DB_NAME" | gzip > "$DUMP"
+            echo "Database restore point: $DUMP ($(du -h "$DUMP" | cut -f1))"
+            ls -1t .deploy-backups/*.sql.gz | tail -n +6 | xargs -r rm --
+
+            docker compose pull "$COMPOSE_SERVICE"
+            docker compose up -d --no-deps "$COMPOSE_SERVICE"
+
+            # Generous: a Keycloak major upgrade runs Liquibase schema migration on
+            # first boot, which takes far longer than a restart. Timing out here would
+            # roll back mid-migration.
+            echo "Waiting for Keycloak to become ready..."
+            for i in $(seq 1 60); do
+              if curl -sf --max-time 5 http://127.0.0.1:9004/health/ready > /dev/null; then
+                echo "Ready."
+                rm -f docker-compose.yml.prev
+                docker inspect --format \
+                  'commit={{index .Config.Labels "org.opencontainers.image.revision"}} theme_jar_sha256={{index .Config.Labels "in.civicdatalab.theme.jar.sha256"}}' \
+                  "$CONTAINER_NAME"
+                exit 0
+              fi
+              sleep 6
+            done
+
+            echo "::error::Keycloak did not become ready after deploy -- rolling back."
+
+            # Restore the previous compose file too: the failure may have come
+            # from a compose change rather than from the image.
+            if [ -f docker-compose.yml.prev ]; then
+              echo "Restoring the previous compose file."
+              mv docker-compose.yml.prev docker-compose.yml
+            fi
+
+            if [ -n "$PREVIOUS_IMAGE" ]; then
+              KEYCLOAK_IMAGE="$PREVIOUS_IMAGE" docker compose up -d --no-deps "$COMPOSE_SERVICE"
+              for i in $(seq 1 30); do
+                if curl -sf --max-time 5 http://127.0.0.1:9004/health/ready > /dev/null; then
+                  echo "Rollback healthy."
+                  exit 1
+                fi
+                sleep 6
+              done
+              echo "::error::Rollback image also failed to become ready -- needs manual intervention."
+              echo "::error::If this deploy changed the Keycloak major version, the schema has already been migrated and the older image CANNOT start against it. Restore the newest dump in ~/$DEPLOY_PATH/.deploy-backups/ before retrying the previous image."
+            else
+              echo "::error::No previous image captured -- nothing to roll back to."
+            fi
+            exit 1
+
+  # The theme ships independently of the app, so a theme change can break sign-in
+  # while nothing in the product repos moves and every product pipeline stays green.
+  # The deploy's own gate only proves Keycloak booted (/health/ready) — not that a
+  # user can still reach the login page, that "Continue With Google" is rendered, or
+  # that the privacy links the theme builds still resolve.
+  #
+  # Calls the test repo's reusable workflow directly rather than firing a
+  # repository_dispatch: dispatching across repositories needs a PAT with `repo`
+  # scope stored here, and this needs no new secret. The listener also accepts
+  # repository_dispatch if a token is ever preferred.
+  #
+  # Deliberately not gating the deploy: by the time this runs the theme is already
+  # live, and Keycloak cannot be rolled back automatically once a major version has
+  # migrated the schema. A red run here is a signal to look, not an automatic revert.
+  keycloak-tests:
+    name: Keycloak tests
+    needs: deploy
+    if: success()
+    uses: CivicDataLab/CivicDataSpace-test/.github/workflows/keycloak-tests.yml@CI
+    with:
+      keycloak_url: https://auth.civicdatalab.in
+      app_base_url: https://dev.civicdataspace.in
+    secrets:
+      HOME_URL_DEV: ${{ secrets.HOME_URL_DEV }}
+      # Optional. Present -> the registration tests also run; absent -> they skip,
+      # because they create real accounts and must be able to delete them.
+      KEYCLOAK_CLIENT_SECRET: ${{ secrets.KEYCLOAK_CLIENT_SECRET }}

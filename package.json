@@ -21,7 +21,8 @@
         "keycloakify": "^11.8.42",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
-        "@keycloakify/email-native": "~260007.0.0"
+        "@keycloakify/email-native": "~260007.0.0",
+        "@tabler/icons-react": "^3.46.0"
     },
     "devDependencies": {
         "@eslint/js": "^9.15.0",

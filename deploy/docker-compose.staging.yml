@@ -1,0 +1,85 @@
+# Staging Keycloak stack (auth.civicdatalab.in).
+#
+# This file is the source of truth. deploy-keycloak-staging.yml copies it to
+# ~/keycloak/docker-compose.yml on the staging box on every deploy, so the box
+# holds nothing hand-written and a change here goes through a PR like any other.
+#
+# Secrets stay in ~/keycloak/.env on the box and are never committed: it supplies
+# DATABASE_NAME, DATABASE_USERNAME, DATABASE_PASSWORD, KEYCLOAK_USER,
+# KEYCLOAK_PASSWORD and KC_HOSTNAME.
+
+services:
+  kc_postgres:
+    image: postgres:15
+    env_file: .env
+    container_name: keycloak-staging-db
+    restart: unless-stopped
+
+    volumes:
+      - kc_postgres_data:/var/lib/postgresql/data
+
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USERNAME} -d ${DATABASE_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    # Built and pushed by .github/workflows/deploy-keycloak-staging.yml.
+    # Deliberately no `build:` here -- with both, `docker compose up --build`
+    # would silently replace the CI-built image with a local build and the
+    # running server would stop corresponding to any commit.
+    image: ${KEYCLOAK_IMAGE:-ghcr.io/civicdatalab/dataspacekeycloaktheme:staging}
+    env_file: .env
+    container_name: keycloak-staging
+    restart: unless-stopped
+
+    environment:
+      KC_DB_URL: jdbc:postgresql://kc_postgres:5432/${DATABASE_NAME}
+      KC_DB_USERNAME: ${DATABASE_USERNAME}
+      KC_DB_PASSWORD: ${DATABASE_PASSWORD}
+
+      # hostname v2 (Keycloak 26 removed v1). As a full URL this pins scheme,
+      # host and context path explicitly instead of resolving them from the
+      # request, which is what makes STRICT safe behind a TLS-terminating proxy.
+      # KC_HOSTNAME_STRICT_HTTPS was removed along with v1.
+      KC_HOSTNAME: https://auth.civicdatalab.in
+      KC_HOSTNAME_STRICT: true
+
+      KC_HTTP_ENABLED: true
+      KC_LOG_LEVEL: INFO
+
+      # These are the Keycloak 26 names. They were silently ignored on 24 --
+      # `kc.sh show-config` echoed them back, which is what made them look like
+      # they worked and cost an admin recovery on 2026-08-26. They take effect
+      # from this upgrade onward.
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_USER}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_PASSWORD}
+
+    # --optimized asserts the image was already built with kc.sh build and
+    # refuses to silently re-augment. The build-time options (db, proxy,
+    # http-relative-path, health, metrics) are baked into the image instead.
+    command:
+      - start
+      - --optimized
+
+    # Bound to loopback; nginx terminates TLS for auth.civicdatalab.in.
+    # 9000 is the management interface (health, metrics) that Keycloak 25 split
+    # out from the application port. The deploy's health gate probes it, so it
+    # has to be published or a healthy deploy would look like a failed one.
+    ports:
+      - "127.0.0.1:8004:8080"
+      - "127.0.0.1:9004:9000"
+
+    depends_on:
+      kc_postgres:
+        condition: service_healthy
+
+volumes:
+  kc_postgres_data:
+    driver: local
