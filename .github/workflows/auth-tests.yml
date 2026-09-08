@@ -14,7 +14,7 @@
 #
 # Deploys nothing. Read-only against the live server.
 
-name: Auth tests
+name: Keycloak tests
 
 on:
   schedule:
