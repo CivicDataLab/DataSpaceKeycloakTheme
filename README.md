@@ -1,9 +1,10 @@
 # CivicDataLab Keycloak Theme
 
-[![Deployment](https://github.com/CivicDataLab/DataSpaceKeycloakTheme/actions/workflows/deploy-keycloak-staging.yml/badge.svg?branch=main)](https://github.com/CivicDataLab/DataSpaceKeycloakTheme/actions/workflows/deploy-keycloak-staging.yml)
-[![CI](https://github.com/CivicDataLab/DataSpaceKeycloakTheme/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/CivicDataLab/DataSpaceKeycloakTheme/actions/workflows/ci.yaml)
-[![Keycloak](https://img.shields.io/badge/Keycloak-26.7.0-blue)](https://www.keycloak.org/)
-[![Keycloakify](https://img.shields.io/badge/Keycloakify-v11-blue)](https://keycloakify.dev)
+[![deploy](https://img.shields.io/github/actions/workflow/status/CivicDataLab/DataSpaceKeycloakTheme/deploy-keycloak-staging.yml?branch=main&label=deploy&logo=githubactions&logoColor=white)](https://github.com/CivicDataLab/DataSpaceKeycloakTheme/actions/workflows/deploy-keycloak-staging.yml)
+[![ci](https://img.shields.io/github/actions/workflow/status/CivicDataLab/DataSpaceKeycloakTheme/ci.yaml?branch=main&label=ci&logo=githubactions&logoColor=white)](https://github.com/CivicDataLab/DataSpaceKeycloakTheme/actions/workflows/ci.yaml)
+[![deploys to](https://img.shields.io/badge/deploys%20to-auth.civicdatalab.in-0A7D33)](https://auth.civicdatalab.in/realms/DataSpace)
+[![Keycloak](https://img.shields.io/badge/Keycloak-26.7.0-4D4D4D)](https://www.keycloak.org/)
+[![Keycloakify](https://img.shields.io/badge/Keycloakify-v11-4D4D4D)](https://keycloakify.dev)
 
 The login, registration and account pages for
 [**auth.civicdatalab.in**](https://auth.civicdatalab.in) — the identity provider
