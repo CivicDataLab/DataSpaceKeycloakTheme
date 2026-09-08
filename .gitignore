@@ -55,3 +55,28 @@ jspm_packages
 /dist_keycloak
 /build
 /storybook-static
+
+# ── Secrets and credentials ───────────────────────────────────────────────
+# Deliberately explicit. Nothing sensitive has ever been committed here (634
+# commits scanned before this repo went public: no .env, no key material, no
+# credentials), and these patterns are what keeps that true.
+#
+# Real configuration lives in the .env file on the deploy host and in GitHub
+# environment secrets. Neither belongs in git.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.keystore
+id_rsa
+id_ed25519
+
+# ── Python (tooling that runs alongside this repo) ────────────────────────
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+coverage.xml
+.coverage
