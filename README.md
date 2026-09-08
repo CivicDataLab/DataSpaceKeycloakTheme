@@ -1,6 +1,6 @@
 # CivicDataLab Keycloak Theme
 
-[![Deploy to production](https://github.com/CivicDataLab/DataSpaceKeycloakTheme/actions/workflows/deploy-keycloak-staging.yml/badge.svg?branch=main)](https://github.com/CivicDataLab/DataSpaceKeycloakTheme/actions/workflows/deploy-keycloak-staging.yml)
+[![Deployment](https://github.com/CivicDataLab/DataSpaceKeycloakTheme/actions/workflows/deploy-keycloak-staging.yml/badge.svg?branch=main)](https://github.com/CivicDataLab/DataSpaceKeycloakTheme/actions/workflows/deploy-keycloak-staging.yml)
 [![CI](https://github.com/CivicDataLab/DataSpaceKeycloakTheme/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/CivicDataLab/DataSpaceKeycloakTheme/actions/workflows/ci.yaml)
 [![Keycloak](https://img.shields.io/badge/Keycloak-26.7.0-blue)](https://www.keycloak.org/)
 [![Keycloakify](https://img.shields.io/badge/Keycloakify-v11-blue)](https://keycloakify.dev)
