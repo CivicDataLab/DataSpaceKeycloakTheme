@@ -1,19 +1,27 @@
-name: Deploy Keycloak theme to staging
+name: Deploy Keycloak theme to production
 
-# `dev` is the integration branch for staging: anything merged there is what
-# staging should be running. `main` is deliberately not wired up -- it does not
-# yet carry the theme work, so auto-deploying it would regress staging.
+# auth.civicdatalab.in is PRODUCTION. It is the auth server for CivicDataSpace
+# (dev and prod), ParakhAI (dev and prod), Analytics (dev and prod) and the
+# DRR-hosted DataSpace. An outage here signs every user out of every product.
+#
+# `main` is therefore the deploying branch: work lands on `dev`, is reviewed, and
+# only reaches users when it is merged to `main`. Pushing to `dev` no longer
+# deploys.
+#
+# workflow_dispatch only appears once this file exists on the DEFAULT branch --
+# that is why it has never been usable here (see CivicDataSpace-test#30 for the
+# same defect in two other repos).
 on:
   push:
     branches:
-      - dev
+      - main
   workflow_dispatch:
     inputs:
       ref:
-        description: "Branch, tag or SHA to build and deploy (defaults to dev)"
+        description: "Branch, tag or SHA to build and deploy (defaults to main)"
         type: string
         required: false
-        default: dev
+        default: main
 
 concurrency:
   group: keycloak-staging-deploy
@@ -24,6 +32,16 @@ env:
   # Lowercased: github.repository is mixed-case and Docker rejects
   # uppercase in image names.
   IMAGE_NAME: civicdatalab/dataspacekeycloaktheme
+  # These four are deliberately NOT renamed despite this being production now.
+  #
+  # CONTAINER_NAME must match the running container: change it and compose
+  # creates a second one and orphans the live server. DEPLOY_PATH is the
+  # directory on the box. The compose file's volume (kc_postgres_data) is the
+  # same story but worse -- a renamed volume gives Keycloak an EMPTY database,
+  # losing every realm, client and user.
+  #
+  # The names say "staging" for historical reasons. That is cosmetic. Renaming
+  # them is an auth outage for every CivicDataLab product.
   DEPLOY_PATH: keycloak
   COMPOSE_SERVICE: keycloak
   CONTAINER_NAME: keycloak-staging
@@ -128,9 +146,13 @@ jobs:
           echo "image_ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}" >> "$GITHUB_OUTPUT"
 
   deploy:
-    name: Deploy to staging
+    name: Deploy to production
     needs: build
     runs-on: ubuntu-latest
+    # Kept as keycloak-staging on purpose: EC2_HOST, EC2_USERNAME and
+    # EC2_PRIVATE_KEY are scoped to this environment, and GitHub cannot rename an
+    # environment while preserving its secrets. Renaming would strip the deploy's
+    # SSH key. Rename only alongside re-adding those three secrets.
     environment: keycloak-staging
     timeout-minutes: 15
     permissions:
