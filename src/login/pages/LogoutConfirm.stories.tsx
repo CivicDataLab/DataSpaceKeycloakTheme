@@ -25,9 +25,6 @@ export const WithBackToApplication: Story = {
                 url: {
                     logoutConfirmAction: "/mock-logout-action"
                 },
-                client: {
-                    baseUrl: "/mock-client-url"
-                },
                 logoutConfirm: {
                     code: "mock-session-code",
                     skipLink: false
@@ -44,9 +41,6 @@ export const WithSessionMessage: Story = {
             kcContext={{
                 url: {
                     logoutConfirmAction: "/mock-logout-action"
-                },
-                client: {
-                    baseUrl: "/mock-client-url"
                 },
                 logoutConfirm: {
                     code: "mock-session-code",

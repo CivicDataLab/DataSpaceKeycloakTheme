@@ -10,6 +10,20 @@ export type KcContextExtension = {
     };
 };
 
-export type KcContextExtensionPerPage = {};
+export type KcContextExtensionPerPage = {
+    "signed-in.ftl": {};
+    "register.ftl": {
+        social?: {
+            displayInfo?: boolean;
+            providers?: {
+                loginUrl: string;
+                alias: string;
+                providerId: string;
+                displayName: string;
+                iconClasses?: string;
+            }[];
+        };
+    };
+};
 
 export type KcContext = ExtendKcContext<KcContextExtension, KcContextExtensionPerPage>;

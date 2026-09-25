@@ -14,7 +14,32 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
-    render: () => <KcPageStory />
+    render: () => (
+        <KcPageStory
+            kcContext={{
+                termsAcceptanceRequired: true,
+                social: {
+                    displayInfo: true,
+                    providers: [
+                        {
+                            loginUrl: "#",
+                            alias: "google",
+                            providerId: "google",
+                            displayName: "Google",
+                            iconClasses: "fa fa-google"
+                        }
+                    ]
+                },
+                profile: {
+                    attributesByName: {
+                        username: { annotations: { inputType: "hidden" } },
+                        firstName: { annotations: { inputType: "hidden" } },
+                        lastName: { annotations: { inputType: "hidden" } }
+                    }
+                }
+            }}
+        />
+    )
 };
 
 export const WithEmailAlreadyExists: Story = {
