@@ -49,17 +49,16 @@ COPY --from=theme-build \
 # at runtime, or the server re-augments and the ~16s cost comes straight back.
 ENV KC_DB=postgres \
     KC_HEALTH_ENABLED=true \
-    KC_METRICS_ENABLED=true \
-    KC_HTTP_RELATIVE_PATH=/auth
+    KC_METRICS_ENABLED=true
 
 # `proxy` was deprecated in Keycloak 24 and removed in 26. nginx already sends
 # the X-Forwarded-* headers this relies on.
 ENV KC_PROXY_HEADERS=xforwarded
 
-# Health and metrics moved to management port 9000 in Keycloak 25. Left unset,
-# the management relative path silently inherits http-relative-path and health
-# would sit at /auth/health/ready on 9000 -- pinned to / here so the deploy's
-# probe URL is deterministic rather than inherited.
+# Health and metrics moved to management port 9000 in Keycloak 25. The
+# management relative path inherits http-relative-path when unset; pinned
+# explicitly so the deploy's probe URL cannot drift if the relative path
+# changes again.
 ENV KC_HTTP_MANAGEMENT_RELATIVE_PATH=/
 
 # Providers are registered at build time. Without this the augmentation runs on
