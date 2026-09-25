@@ -19,7 +19,7 @@ export default function Login(props: PageProps<Extract<KcContext, { pageId: "log
     const { social, realm, url, usernameHidden, login, auth, registrationDisabled, messagesPerField } = kcContext;
 
 
-    const { msg, msgStr } = i18n;
+    const { msg } = i18n;
 
     const [isLoginButtonDisabled, setIsLoginButtonDisabled] = useState(false);
 
@@ -30,15 +30,20 @@ export default function Login(props: PageProps<Extract<KcContext, { pageId: "log
             doUseDefaultCss={doUseDefaultCss}
             classes={classes}
             displayMessage={!messagesPerField.existsError("username", "password")}
-            headerNode={msg("loginAccountTitle")}
+            headerNode={
+                <>
+                    <h1 className="h1">Welcome back</h1>
+                    <p className="auth-subtitle">Sign in to continue to CivicDataSpace.</p>
+                </>
+            }
             displayInfo={realm.password && realm.registrationAllowed && !registrationDisabled}
             infoNode={
                 <div id="kc-registration-container">
                     <div id="kc-registration">
                         <span>
-                            {msg("noAccount")}{" "}
+                            Don&apos;t have an account?{" "}
                             <a tabIndex={8} href={url.registrationUrl}>
-                                {msg("doRegister")}
+                                Create an account
                             </a>
                         </span>
                     </div>
@@ -48,7 +53,9 @@ export default function Login(props: PageProps<Extract<KcContext, { pageId: "log
                 <>
                     {realm.password && social?.providers !== undefined && social.providers.length !== 0 && (
                         <div id="kc-social-providers" className={kcClsx("kcFormSocialAccountSectionClass")}>
-                            <div className="kc-social-divider" aria-hidden="true" />
+                            <div className="kc-social-divider">
+                                <span>or</span>
+                            </div>
                             <ul className={kcClsx("kcFormSocialAccountListClass", social.providers.length > 3 && "kcFormSocialAccountListGridClass")}>
                                 {social.providers.map((...[p, , providers]) => (
                                     <li key={p.alias}>
@@ -68,7 +75,7 @@ export default function Login(props: PageProps<Extract<KcContext, { pageId: "log
                                                 <span
                                                     className={kcClsx("kcFormSocialAccountNameClass")}
                                                     dangerouslySetInnerHTML={{
-                                                        __html: `Continue With ${kcSanitize(p.displayName)}`
+                                                        __html: `Continue with ${kcSanitize(p.displayName)}`
                                                     }}
                                                 />
                                             </span>
@@ -96,11 +103,10 @@ export default function Login(props: PageProps<Extract<KcContext, { pageId: "log
                             {!usernameHidden && (
                                 <div className={kcClsx("kcFormGroupClass")}>
                                     <label htmlFor="username" className={kcClsx("kcLabelClass")}>
-                                        {!realm.loginWithEmailAllowed
-                                            ? msg("username")
-                                            : !realm.registrationEmailAsUsername
-                                              ? msg("usernameOrEmail")
-                                              : msg("email")}
+                                        {realm.loginWithEmailAllowed ? "Email" : msg("username")}{" "}
+                                        <span className="required" aria-hidden="true">
+                                            *
+                                        </span>
                                     </label>
                                     <input
                                         tabIndex={2}
@@ -111,6 +117,7 @@ export default function Login(props: PageProps<Extract<KcContext, { pageId: "log
                                         type="text"
                                         autoFocus
                                         autoComplete="username"
+                                        placeholder={realm.loginWithEmailAllowed ? "you@example.org" : undefined}
                                         aria-invalid={messagesPerField.existsError("username", "password")}
                                     />
                                     {messagesPerField.existsError("username", "password") && (
@@ -131,9 +138,23 @@ export default function Login(props: PageProps<Extract<KcContext, { pageId: "log
                             )}
 
                             <div className={kcClsx("kcFormGroupClass")}>
-                                <label htmlFor="password" className={kcClsx("kcLabelClass")}>
-                                    {msg("password")}
-                                </label>
+                                <div className="civic-label-row">
+                                    <label htmlFor="password" className={kcClsx("kcLabelClass")}>
+                                        Password{" "}
+                                        <span className="required" aria-hidden="true">
+                                            *
+                                        </span>
+                                    </label>
+                                    {realm.resetPasswordAllowed && (
+                                        <a
+                                            className="civic-forgot-link"
+                                            tabIndex={6}
+                                            href={url.loginResetCredentialsUrl}
+                                        >
+                                            Forgot password?
+                                        </a>
+                                    )}
+                                </div>
                                 <PasswordWrapper kcClsx={kcClsx} i18n={i18n} passwordInputId="password">
                                     <input
                                         tabIndex={3}
@@ -142,6 +163,7 @@ export default function Login(props: PageProps<Extract<KcContext, { pageId: "log
                                         name="password"
                                         type="password"
                                         autoComplete="current-password"
+                                        placeholder="Enter your password"
                                         aria-invalid={messagesPerField.existsError("username", "password")}
                                     />
                                 </PasswordWrapper>
@@ -161,34 +183,6 @@ export default function Login(props: PageProps<Extract<KcContext, { pageId: "log
                                 )}
                             </div>
 
-                            <div className={kcClsx("kcFormGroupClass", "kcFormSettingClass")}>
-                                <div id="kc-form-options">
-                                    {realm.rememberMe && !usernameHidden && (
-                                        <div className="checkbox">
-                                            <label>
-                                                <input
-                                                    tabIndex={5}
-                                                    id="rememberMe"
-                                                    name="rememberMe"
-                                                    type="checkbox"
-                                                    defaultChecked={!!login.rememberMe}
-                                                />{" "}
-                                                {msg("rememberMe")}
-                                            </label>
-                                        </div>
-                                    )}
-                                </div>
-                                <div className={kcClsx("kcFormOptionsWrapperClass")}>
-                                    {realm.resetPasswordAllowed && (
-                                        <span>
-                                            <a tabIndex={6} href={url.loginResetCredentialsUrl}>
-                                                {msg("doForgotPassword")}
-                                            </a>
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-
                             <div id="kc-form-buttons" className={kcClsx("kcFormGroupClass")}>
                                 <input type="hidden" id="id-hidden-input" name="credentialId" value={auth.selectedCredential} />
                                 <input
@@ -198,7 +192,7 @@ export default function Login(props: PageProps<Extract<KcContext, { pageId: "log
                                     name="login"
                                     id="kc-login"
                                     type="submit"
-                                    value={msgStr("doLogIn")}
+                                    value="Sign In"
                                 />
                             </div>
                         </form>

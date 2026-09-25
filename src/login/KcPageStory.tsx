@@ -11,12 +11,14 @@ const kcContextExtension: KcContextExtension = {
         ...kcEnvDefaults
     }
 };
-const kcContextExtensionPerPage: KcContextExtensionPerPage = {};
+const kcContextExtensionPerPage: KcContextExtensionPerPage = {
+    "signed-in.ftl": {},
+    "register.ftl": {}
+};
 
 export const { getKcContextMock } = createGetKcContextMock({
     kcContextExtension,
     kcContextExtensionPerPage,
-    overrides: {},
     overridesPerPage: {}
 });
 
