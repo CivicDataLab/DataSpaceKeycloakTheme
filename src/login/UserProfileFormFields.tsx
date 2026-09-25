@@ -1,4 +1,4 @@
-import { useEffect, Fragment } from "react";
+import { useEffect, useRef, Fragment } from "react";
 import { assert } from "keycloakify/tools/assert";
 import type { KcClsx } from "keycloakify/login/lib/kcClsx";
 import {
@@ -11,11 +11,25 @@ import type { UserProfileFormFieldsProps } from "keycloakify/login/UserProfileFo
 import type { Attribute } from "keycloakify/login/KcContext";
 import type { KcContext } from "./KcContext";
 import type { I18n } from "./i18n";
+import { IconChevronDown } from "@tabler/icons-react";
 import PasswordWrapper from "./components/PasswordWrapper";
 import FieldErrorIcon from "./components/FieldErrorIcon";
 
-export default function UserProfileFormFields(props: UserProfileFormFieldsProps<KcContext, I18n>) {
-    const { kcContext, i18n, kcClsx, onIsFormSubmittableValueChange, doMakeUserConfirmPassword, BeforeField, AfterField } = props;
+type ProfileFormFieldsProps = UserProfileFormFieldsProps<KcContext, I18n> & {
+    shouldRevealErrors?: boolean;
+};
+
+export default function UserProfileFormFields(props: ProfileFormFieldsProps) {
+    const {
+        kcContext,
+        i18n,
+        kcClsx,
+        onIsFormSubmittableValueChange,
+        doMakeUserConfirmPassword,
+        BeforeField,
+        AfterField,
+        shouldRevealErrors = false
+    } = props;
 
     const { advancedMsg } = i18n;
 
@@ -28,15 +42,47 @@ export default function UserProfileFormFields(props: UserProfileFormFieldsProps<
         doMakeUserConfirmPassword
     });
 
+    const formFieldStatesRef = useRef(formFieldStates);
+    formFieldStatesRef.current = formFieldStates;
+
     useEffect(() => {
         onIsFormSubmittableValueChange(isFormSubmittable);
     }, [isFormSubmittable]);
 
+    useEffect(() => {
+        if (!shouldRevealErrors) {
+            return;
+        }
+
+        for (const { attribute, valueOrValues } of formFieldStatesRef.current) {
+            if (attribute.annotations.inputType === "hidden") {
+                continue;
+            }
+            if (attribute.name === "password-confirm" && !doMakeUserConfirmPassword) {
+                continue;
+            }
+
+            dispatchFormAction({
+                action: "update",
+                name: attribute.name,
+                valueOrValues,
+                displayErrorsImmediately: true
+            });
+        }
+    }, [shouldRevealErrors, dispatchFormAction, doMakeUserConfirmPassword]);
+
     const groupNameRef = { current: "" };
+
+    const fieldOrder = ["email", "username", "firstName", "lastName", "password", "password-confirm"];
+    const orderedFields = [...formFieldStates].sort((a, b) => {
+        const aIndex = fieldOrder.indexOf(a.attribute.name);
+        const bIndex = fieldOrder.indexOf(b.attribute.name);
+        return (aIndex === -1 ? fieldOrder.length : aIndex) - (bIndex === -1 ? fieldOrder.length : bIndex);
+    });
 
     return (
         <>
-            {formFieldStates.map(({ attribute, displayableErrors, valueOrValues }) => {
+            {orderedFields.map(({ attribute, displayableErrors, valueOrValues }) => {
                 return (
                     <Fragment key={attribute.name}>
                         <GroupLabel attribute={attribute} groupNameRef={groupNameRef} i18n={i18n} kcClsx={kcClsx} />
@@ -62,9 +108,13 @@ export default function UserProfileFormFields(props: UserProfileFormFieldsProps<
                         >
                             <div className={kcClsx("kcLabelWrapperClass")}>
                                 <label htmlFor={attribute.name} className={kcClsx("kcLabelClass")}>
-                                    {advancedMsg(attribute.displayName ?? "")}
+                                    {advancedMsg(attribute.displayName ?? "")}{" "}
+                                    {attribute.required && (
+                                        <span className="required" aria-hidden="true">
+                                            *
+                                        </span>
+                                    )}
                                 </label>
-                                {attribute.required && <> *</>}
                             </div>
                             <div className={kcClsx("kcInputWrapperClass")}>
                                 {attribute.annotations.inputHelperTextBefore !== undefined && (
@@ -289,7 +339,15 @@ function InputTag(props: InputFieldByTypeProps & { fieldIndex: number | undefine
                 disabled={attribute.readOnly}
                 autoComplete={attribute.autocomplete}
                 placeholder={
-                    attribute.annotations.inputTypePlaceholder === undefined ? undefined : advancedMsgStr(attribute.annotations.inputTypePlaceholder)
+                    attribute.annotations.inputTypePlaceholder !== undefined
+                        ? advancedMsgStr(attribute.annotations.inputTypePlaceholder)
+                        : attribute.name === "email"
+                          ? "you@example.org"
+                          : attribute.name === "password"
+                            ? "Create a password"
+                            : attribute.name === "password-confirm"
+                              ? "Re-enter your password"
+                              : undefined
                 }
                 pattern={attribute.annotations.inputTypePattern}
                 size={attribute.annotations.inputTypeSize === undefined ? undefined : parseInt(`${attribute.annotations.inputTypeSize}`)}
@@ -562,71 +620,74 @@ function SelectTag(props: InputFieldByTypeProps) {
     const isMultiple = attribute.annotations.inputType === "multiselect";
 
     return (
-        <select
-            id={attribute.name}
-            name={attribute.name}
-            className={kcClsx("kcInputClass")}
-            aria-invalid={displayableErrors.length !== 0}
-            disabled={attribute.readOnly}
-            multiple={isMultiple}
-            size={attribute.annotations.inputTypeSize === undefined ? undefined : parseInt(`${attribute.annotations.inputTypeSize}`)}
-            value={valueOrValues}
-            onChange={event =>
-                dispatchFormAction({
-                    action: "update",
-                    name: attribute.name,
-                    valueOrValues: (() => {
-                        if (isMultiple) {
-                            return Array.from(event.target.selectedOptions).map(option => option.value);
+        <div className={isMultiple ? undefined : "kc-select-wrap"}>
+            <select
+                id={attribute.name}
+                name={attribute.name}
+                className={kcClsx("kcInputClass")}
+                aria-invalid={displayableErrors.length !== 0}
+                disabled={attribute.readOnly}
+                multiple={isMultiple}
+                size={attribute.annotations.inputTypeSize === undefined ? undefined : parseInt(`${attribute.annotations.inputTypeSize}`)}
+                value={valueOrValues}
+                onChange={event =>
+                    dispatchFormAction({
+                        action: "update",
+                        name: attribute.name,
+                        valueOrValues: (() => {
+                            if (isMultiple) {
+                                return Array.from(event.target.selectedOptions).map(option => option.value);
+                            }
+
+                            return event.target.value;
+                        })()
+                    })
+                }
+                onBlur={() =>
+                    dispatchFormAction({
+                        action: "focus lost",
+                        name: attribute.name,
+                        fieldIndex: undefined
+                    })
+                }
+            >
+                {!isMultiple && <option value=""></option>}
+                {(() => {
+                    const options = (() => {
+                        walk: {
+                            const { inputOptionsFromValidation } = attribute.annotations;
+
+                            if (inputOptionsFromValidation === undefined) {
+                                break walk;
+                            }
+
+                            assert(typeof inputOptionsFromValidation === "string");
+
+                            const validator = (attribute.validators as Record<string, { options?: string[] }>)[inputOptionsFromValidation];
+
+                            if (validator === undefined) {
+                                break walk;
+                            }
+
+                            if (validator.options === undefined) {
+                                break walk;
+                            }
+
+                            return validator.options;
                         }
 
-                        return event.target.value;
-                    })()
-                })
-            }
-            onBlur={() =>
-                dispatchFormAction({
-                    action: "focus lost",
-                    name: attribute.name,
-                    fieldIndex: undefined
-                })
-            }
-        >
-            {!isMultiple && <option value=""></option>}
-            {(() => {
-                const options = (() => {
-                    walk: {
-                        const { inputOptionsFromValidation } = attribute.annotations;
+                        return attribute.validators.options?.options ?? [];
+                    })();
 
-                        if (inputOptionsFromValidation === undefined) {
-                            break walk;
-                        }
-
-                        assert(typeof inputOptionsFromValidation === "string");
-
-                        const validator = (attribute.validators as Record<string, { options?: string[] }>)[inputOptionsFromValidation];
-
-                        if (validator === undefined) {
-                            break walk;
-                        }
-
-                        if (validator.options === undefined) {
-                            break walk;
-                        }
-
-                        return validator.options;
-                    }
-
-                    return attribute.validators.options?.options ?? [];
-                })();
-
-                return options.map(option => (
-                    <option key={option} value={option}>
-                        {inputLabel(i18n, attribute, option)}
-                    </option>
-                ));
-            })()}
-        </select>
+                    return options.map(option => (
+                        <option key={option} value={option}>
+                            {inputLabel(i18n, attribute, option)}
+                        </option>
+                    ));
+                })()}
+            </select>
+            {!isMultiple && <IconChevronDown className="kc-select-chevron" size={16} stroke={1.75} aria-hidden />}
+        </div>
     );
 }
 

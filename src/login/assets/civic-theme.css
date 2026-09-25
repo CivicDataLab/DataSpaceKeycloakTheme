@@ -2,7 +2,7 @@
 
 :root {
   /* DataSpace Brand Colors */
-  --civic-primary-blue: #0B3865;
+  --civic-primary-blue: #0B2540;
   --civic-primary-blue-dark: #072745;
   --civic-primary-blue-light: #0D4A85;
   --civic-tertiary-accent: #F5A623;
@@ -11,12 +11,19 @@
   
   /* Base Colors */
   --civic-white: #ffffff;
+  --civic-form-bg: #f3f5f8;
   --civic-text-dark: #1B4965;
   --civic-text-light: #666666;
   --civic-error: #E5484D;
   --civic-border: #DFE3E6;
   --civic-input-bg: #FFFFFF;
   --civic-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --text: #101826;
+  --primary: #0b3865;
+
+  /* Typography tokens */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 /* Add CivicDataSpace logo */
@@ -39,11 +46,20 @@
 }
 
 body, html {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  height: 100%;
+  font-family: var(--font-sans);
+  min-height: 100%;
   margin: 0;
   padding: 0;
   background: var(--civic-white);
+}
+
+#root,
+#storybook-root {
+  min-height: 100%;
+}
+
+code, kbd, pre, samp {
+  font-family: var(--font-mono);
 }
 
 /* Split Screen Layout */
@@ -54,45 +70,69 @@ body, html {
   min-height: 100vh;
 }
 
-/* Main wrapper for split layout */
+/* Page-level scroll (scrollbar on the far right). Brand panel stays sticky. */
 .civic-split-wrapper {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  min-height: calc(100vh - 60px);
+  min-height: 100vh;
+  min-height: 100dvh;
   position: relative;
 }
 
-/* Left Panel - Form Section */
+/* Left Panel - Form Section (grows with content; window scroll moves this side) */
 #kc-content-wrapper {
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  padding: 60px 80px;
-  background: var(--civic-white);
+  padding: 32px 80px 60px;
+  background: var(--civic-form-bg);
   position: relative;
   grid-column: 1;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
-/* Right Panel - Brand Section */
+.civic-form-column {
+  width: 100%;
+  max-width: 450px;
+  margin-block: auto;
+}
+
+a.subtle-link.back-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 24px;
+  color: #5B6472;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+a.subtle-link.back-home svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+a.subtle-link.back-home:hover {
+  color: var(--text);
+}
+
+/* Right Panel - Brand Section (fixed in the viewport while the page scrolls) */
 .civic-brand-panel {
-  background: linear-gradient(135deg, var(--civic-primary-blue) 0%, var(--civic-primary-blue-dark) 100%);
+  background: var(--civic-primary-blue);
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   grid-column: 2;
-}
-
-.civic-brand-panel::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
 }
 
 /* Logo in Right Panel */
@@ -100,6 +140,67 @@ body, html {
   position: relative;
   z-index: 1;
   text-align: center;
+}
+
+/* Legal links in the bottom-right of the brand panel */
+.civic-legal-links {
+  position: absolute;
+  right: 32px;
+  bottom: 24px;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.civic-legal-links a {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.civic-legal-links a:hover {
+  color: #ffffff;
+}
+
+/* Legal dialog */
+.civic-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(11, 37, 64, 0.55);
+}
+
+.civic-dialog {
+  width: 100%;
+  max-width: 520px;
+  background: var(--civic-white);
+  border-radius: 12px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.28);
+}
+
+.civic-dialog-title {
+  margin: 0;
+  padding: 28px 32px 20px;
+  color: var(--civic-primary-blue);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.civic-dialog-body {
+  padding: 24px 32px 32px;
+  border-top: 1px solid var(--civic-border);
+  color: #555555;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.6;
 }
 
 /* Form Container */
@@ -114,6 +215,30 @@ body, html {
 }
 
 /* Form Header */
+.civic-auth-header {
+  margin-bottom: 28px;
+}
+
+.h1 {
+  margin: 0;
+  color: var(--primary);
+  font-size: 24px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  text-align: left;
+  text-wrap: balance;
+}
+
+.auth-subtitle {
+  margin: 8px 0 0;
+  color: #5B6472;
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 1.45;
+  text-align: left;
+  text-wrap: balance;
+}
+
 #kc-header-wrapper {
   display: block !important;
   margin-bottom: 40px;
@@ -131,15 +256,94 @@ body, html {
 /* Form Groups */
 .form-group,
 .pf-c-form__group {
-  margin-bottom: 24px;
+  margin-bottom: 18px;
   position: relative;
 }
 
 .control-label {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--civic-text-dark);
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
   margin-bottom: 8px;
+}
+
+.civic-label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.civic-label-row .control-label {
+  margin-bottom: 0;
+}
+
+.civic-forgot-link {
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.civic-forgot-link:hover {
+  text-decoration: underline;
+}
+
+#kc-idp-review-profile {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+#kc-idp-review-profile .subtle-link {
+  margin-bottom: 0;
+  align-self: flex-start;
+}
+
+#kc-idp-review-profile-form #email {
+  padding-right: 100px;
+}
+
+#kc-idp-review-profile-form #email:read-only {
+  background: var(--civic-input-bg);
+  color: var(--primary);
+  opacity: 1;
+}
+
+#kc-idp-review-profile-form .form-group:has(#email) > div:last-child {
+  position: relative;
+}
+
+#kc-idp-review-profile-form .civic-verified-badge {
+  position: absolute;
+  top: 15px;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #2f9e5c;
+  font-size: 13px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+#kc-idp-review-profile-form .civic-verified-badge svg {
+  display: block;
+}
+
+#kc-idp-review-profile-form .civic-forgot-link {
+  display: block;
+  margin-top: 16px;
+}
+
+#kc-form-login .required,
+#kc-reset-password-form .required,
+#kc-register-form .required {
+  color: inherit !important;
+  margin-left: 2px;
 }
 
 /* Input Fields */
@@ -150,12 +354,22 @@ input[type="email"],
   width: 100%;
   height: 48px;
   padding: 12px 16px;
-  font-size: 16px;
-  color: var(--civic-text-dark);
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  color: var(--primary);
   background: var(--civic-input-bg);
   border: 1px solid var(--civic-border);
-  border-radius: 4px;
+  border-radius: 8px;
   transition: all 0.2s ease;
+}
+
+input[type="text"]::placeholder,
+input[type="password"]::placeholder,
+input[type="email"]::placeholder,
+.form-control::placeholder {
+  font-family: var(--font-sans);
+  color: #9AA3AF;
+  font-size: 13.5px;
 }
 
 input[type="text"]:focus,
@@ -163,32 +377,31 @@ input[type="password"]:focus,
 input[type="email"]:focus,
 .form-control:focus {
   outline: none;
-  border-color: var(--civic-primary-blue);
-  box-shadow: 0 0 0 3px rgba(27, 73, 101, 0.1);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(11, 56, 101, 0.1);
 }
 
-/* Error State */
+/* Shared field error state */
 .has-error input,
 input.error {
   border-color: var(--civic-error);
 }
 
-.pf-c-form__helper-text.pf-m-error,
-.help-block,
-#kc-register-form [id^="input-error-"] {
+.civic-field-error {
   color: var(--civic-error);
   font-size: 13px;
-  margin-top: 2px !important;
+  line-height: 1.4;
+  margin-top: 6px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
 }
 
+/* Keeps the icon on the first line of multi-line messages */
 .kc-field-error-icon {
   flex-shrink: 0;
   display: block;
-  position: relative;
-  top: 1px;
+  margin-top: 2px;
 }
 
 /* Form Options (Remember me, Forgot password) */
@@ -254,48 +467,80 @@ input[type="submit"] {
   width: 100%;
   height: 48px;
   padding: 12px 24px;
-  font-size: 16px;
+  font-family: inherit;
+  font-size: 14.5px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  text-transform: none;
+  letter-spacing: 0;
   color: var(--civic-white);
-  background: var(--civic-tertiary-accent);
+  background: var(--primary);
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.2s ease;
 }
 
 #kc-login:hover,
 .btn-primary:hover,
 input[type="submit"]:hover {
-  background: var(--civic-tertiary-accent-dark);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(245, 166, 35, 0.3);
+  background: #082c4f;
+  transform: none;
+  box-shadow: none;
 }
 
 #kc-login:active,
 .btn-primary:active,
 input[type="submit"]:active {
-  transform: translateY(0);
+  transform: none;
+}
+
+#kc-form-login #kc-form-buttons,
+#kc-reset-password-form #kc-form-buttons,
+#kc-register-form #kc-form-buttons {
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+/* Error page / IdP override */
+#kc-error-message,
+#kc-idp-override {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+#kc-error-message .btn-primary,
+#kc-idp-override .btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  font-family: inherit;
+  text-decoration: none;
+}
+
+#kc-error-message .subtle-link,
+#kc-idp-override .subtle-link {
+  margin-bottom: 0;
+  align-self: flex-start;
 }
 
 /* Registration Link */
 #kc-registration {
   text-align: center;
   margin-top: 24px;
-  font-size: 14px;
-  color: var(--civic-text-light);
+  font-size: 13px;
+  color: #5b6472;
 }
 
 #kc-registration a {
-  color: var(--civic-tertiary-accent);
+  color: var(--primary);
+  font-size: 13px;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 #kc-registration a:hover {
-  color: var(--civic-tertiary-accent-dark);
   text-decoration: underline;
 }
 
@@ -310,23 +555,49 @@ input[type="submit"]:active {
   width: 100%;
   height: 48px;
   padding: 12px 16px;
-  font-size: 16px;
-  color: var(--civic-text-dark);
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  color: var(--primary);
   background: var(--civic-input-bg);
   border: 1px solid var(--civic-border);
-  border-radius: 4px;
+  border-radius: 8px;
   transition: all 0.2s ease;
 }
 
 /* Terms checkbox + label spacing */
-#kc-register-form .form-group:has(#termsAccepted) {
-  margin-top: -10px;
+#kc-register-form .form-group:has(#termsAccepted),
+#kc-register-form .civic-terms {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 4px 0 18px;
+  font-size: 13px;
+  color: #5b6472;
+  line-height: 1.45;
+  font-weight: 400;
+}
+
+/* Spacing already comes from the row gap of .civic-terms */
+#kc-register-form .civic-terms #input-error-termsAccepted {
+  flex-basis: 100%;
+  margin-top: 0;
+}
+
+#kc-register-form .civic-terms p {
+  margin: 0;
+}
+
+#kc-register-form .civic-terms a {
+  color: var(--primary);
+  text-decoration: underline;
+  font-weight: 500;
 }
 
 #kc-register-form #termsAccepted {
   width: 18px;
   height: 18px;
-  margin: 0 8px 0 0;
+  margin: 0;
   padding: 0;
   vertical-align: middle;
   accent-color: var(--civic-primary-blue);
@@ -366,7 +637,7 @@ input[type="submit"]:active {
 
 /* Back to Login Link */
 #kc-form-buttons {
-  margin-top: 24px;
+  margin-top: 8px;
 }
 
 #kc-form-buttons .btn-default {
@@ -396,8 +667,8 @@ input[type="submit"]:active {
 
 .pf-c-form__label {
   font-size: 14px;
-  font-weight: 500;
-  color: var(--civic-text-dark);
+  font-weight: 650;
+  color: #101826;
   margin-bottom: 8px;
 }
 
@@ -424,13 +695,41 @@ select.form-control,
   width: 100%;
   height: 48px;
   padding: 12px 16px;
-  font-size: 16px;
-  color: var(--civic-text-dark);
+  font-size: 15px;
+  color: var(--primary);
   background: var(--civic-input-bg);
   border: 1px solid var(--civic-border);
-  border-radius: 4px;
+  border-radius: 8px;
   transition: all 0.2s ease;
   cursor: pointer;
+}
+
+.kc-select-wrap {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.kc-select-wrap select.form-control,
+.kc-select-wrap select.pf-c-form-control {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 40px;
+}
+
+.kc-select-wrap select.form-control::-ms-expand,
+.kc-select-wrap select.pf-c-form-control::-ms-expand {
+  display: none;
+}
+
+.kc-select-chevron {
+  position: absolute;
+  right: 7px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--primary);
 }
 
 select.form-control:focus,
@@ -450,7 +749,7 @@ select.form-control:focus,
 
 /* Social Login Providers */
 #kc-social-providers {
-  margin-top: 32px;
+  margin-top: 4px;
 }
 
 /* Social OR divider */
@@ -461,26 +760,39 @@ select.form-control:focus,
 }
 
 .kc-social-divider {
-  height: 1px;
-  margin: 24px 0 20px;
-  background: var(--civic-border);
-  border: none;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 20px 0;
+  color: #8891a0;
+  font-size: 11.5px;
+  line-height: 1;
 }
 
-/* Provider list — shared columns so icons/text align while staying centered */
+.kc-social-divider::before,
+.kc-social-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--civic-border);
+}
+
+.kc-social-divider span {
+  flex-shrink: 0;
+}
+
+/* Provider list */
 #kc-social-providers ul {
   list-style: none;
   padding: 0;
   margin: 0;
-  display: grid;
-  grid-template-columns: 1fr auto auto 1fr;
-  column-gap: 0;
-  row-gap: 12px;
-  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 #kc-social-providers li {
-  display: contents;
+  display: block;
 }
 
 /* Provider buttons */
@@ -488,24 +800,21 @@ select.form-control:focus,
 #kc-social-providers a.pf-c-button,
 #kc-social-providers a.pf-m-control {
   position: static;
-  display: grid;
-  grid-column: 1 / -1;
-  grid-template-columns: subgrid;
+  display: flex;
   align-items: center;
-  column-gap: 0;
-  row-gap: 0;
-  width: auto;
+  justify-content: center;
+  width: 100%;
   min-height: 48px;
   height: 48px;
-  padding: 0;
-  font-size: 16px;
+  padding: 0 16px;
+  font-size: 15px;
   font-weight: 600;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
   text-transform: none;
-  color: var(--civic-text-dark);
+  color: #101826;
   background: var(--civic-white) !important;
   border: 1px solid var(--civic-border) !important;
-  border-radius: 4px;
+  border-radius: 8px;
   text-decoration: none;
   transition: all 0.2s ease;
   transform: none;
@@ -515,25 +824,28 @@ select.form-control:focus,
 #kc-social-providers a:hover,
 #kc-social-providers a.pf-c-button:hover,
 #kc-social-providers a.pf-m-control:hover {
-  border-color: var(--civic-primary-blue) !important;
+  border-color: #c5ccd6 !important;
   background: var(--civic-white) !important;
-  color: var(--civic-text-dark);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+  color: #101826;
+  transform: none;
+  box-shadow: none !important;
 }
 
-/* Flatten wrapper so icon + label join the shared columns */
-#kc-social-providers .kc-social-provider-content {
-  display: contents;
-}
-
-#kc-social-providers .kc-social-provider-icon-wrap {
-  grid-column: 2;
+#kc-social-providers .kc-social-provider-content,
+#kc-idp-link-confirm .kc-social-provider-content {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  gap: 10px;
+}
+
+#kc-social-providers .kc-social-provider-icon-wrap,
+#kc-idp-link-confirm .kc-social-provider-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
   line-height: 0;
 }
@@ -549,10 +861,9 @@ select.form-control:focus,
 
 #kc-social-providers .kc-social-provider-name,
 #kc-social-providers .kc-social-icon-text {
-  grid-column: 3;
   display: block;
   margin: 0;
-  padding-left: 12px;
+  padding: 0;
   line-height: 1.2;
   text-align: left;
   white-space: nowrap;
@@ -627,7 +938,7 @@ select.form-control:focus,
 .civic-footer {
   width: 100%;
   padding: 16px 80px;
-  background: #0B3865;
+  background: var(--civic-primary-blue);
   color: var(--civic-white);
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -695,27 +1006,26 @@ select.form-control:focus,
   transform: translateY(-2px);
 }
 
-/* Alert Messages */
+/* Alert Messages: plain text notices, so spacing comes from margins only */
 .pf-c-alert,
 .alert {
   display: flex !important;
   flex-direction: row !important;
   align-items: flex-start;
   gap: 8px;
-  padding: 12px 0;
-  margin-bottom: 20px;
-  border-radius: 4px;
+  margin: 4px 0 20px;
   font-size: 14px;
   line-height: 1.4;
 }
 
+/* Keeps the icon on the first line of multi-line messages */
 .pf-c-alert__icon {
   flex-shrink: 0;
   display: flex !important;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   line-height: 1.4;
-  margin: 2px 0 0;
+  margin-top: 1px;
 }
 
 .pf-c-alert__icon::before {
@@ -730,9 +1040,8 @@ select.form-control:focus,
 }
 
 .pf-c-alert.pf-m-danger,
+.pf-c-alert.pf-m-error,
 .alert-error {
-  background-color: rgba(231, 76, 60, 0.1);
-  border: 1px solid var(--civic-error);
   color: var(--civic-error);
 }
 
@@ -741,47 +1050,94 @@ select.form-control:focus,
   color: var(--civic-text-dark);
 }
 
-/* IdP link confirm — Review profile / Add to existing account */
-#kc-register-form .form-group:has(#updateProfile) {
+/* IdP link confirm — existing account found */
+#kc-idp-link-confirm {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 8px;
+  flex-direction: column;
+  gap: 16px;
 }
 
-#kc-register-form #updateProfile,
-#kc-register-form #linkAccount {
-  flex: 1 1 auto;
-  width: auto;
-  min-width: 0;
-  height: 40px;
-  margin: 0;
-  padding: 8px 16px;
-  font-size: 14px;
+#kc-idp-link-confirm .civic-idp-continue {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 48px;
+  padding: 0 16px;
+  font-family: inherit;
+  font-size: 15px;
   font-weight: 600;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: var(--civic-text-dark);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--primary);
   background: var(--civic-white);
   border: 1px solid var(--civic-border);
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: border-color 0.2s ease;
 }
 
-#kc-register-form #updateProfile:hover,
-#kc-register-form #linkAccount:hover {
-  border-color: var(--civic-primary-blue);
+#kc-idp-link-confirm .civic-idp-continue:hover {
+  border-color: #c5ccd6;
   background: var(--civic-white);
-  color: var(--civic-text-dark);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  color: var(--primary);
 }
 
-#kc-register-form #updateProfile:active,
-#kc-register-form #linkAccount:active {
-  transform: translateY(0);
+#kc-idp-link-confirm .subtle-link {
+  margin-bottom: 0;
+  align-self: flex-start;
+}
+
+/* Account verified / info page */
+.civic-auth-header:has(.civic-success-status) {
+  margin-bottom: 0;
+}
+
+.civic-success-status {
+  text-align: center;
+}
+
+.civic-success-status .h1,
+.civic-success-status .auth-subtitle {
+  text-align: center;
+}
+
+.civic-success-mark,
+.civic-email-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+}
+
+.civic-success-mark {
+  background: #e8f8ee;
+  border: 1.5px solid #c6ebd4;
+  color: #2f9e5c;
+}
+
+.civic-email-mark {
+  background: #e8eef5;
+  border: 1.5px solid #c5d4e4;
+  color: var(--primary);
+}
+
+.civic-success-mark svg,
+.civic-email-mark svg {
+  display: block;
+}
+
+.civic-success-status .btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: 28px;
+  font-family: inherit;
+  text-decoration: none;
 }
 
 /* Responsive Design */
