@@ -30,6 +30,11 @@ export const Default: Story = {
                         }
                     ]
                 },
+                passwordPolicies: {
+                    length: 8,
+                    upperCase: 1,
+                    digits: 1
+                },
                 profile: {
                     attributesByName: {
                         username: { annotations: { inputType: "hidden" } },

@@ -13,6 +13,7 @@ const kcContextExtension: KcContextExtension = {
 };
 const kcContextExtensionPerPage: KcContextExtensionPerPage = {
     "signed-in.ftl": {},
+    "login-update-password.ftl": {},
     "register.ftl": {}
 };
 

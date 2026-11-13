@@ -37,3 +37,43 @@ export const AccountCreationFailed: Story = {
         />
     )
 };
+
+export const InvalidRedirectUri: Story = {
+    render: () => (
+        <KcPageStory
+            kcContext={{
+                message: {
+                    type: "error",
+                    summary: "Invalid parameter: redirect_uri"
+                }
+            }}
+        />
+    )
+};
+
+export const UnknownClient: Story = {
+    render: () => (
+        <KcPageStory
+            kcContext={{
+                message: {
+                    type: "error",
+                    summary: "Client not found."
+                }
+            }}
+        />
+    )
+};
+
+export const IdentityAlreadyLinked: Story = {
+    render: () => (
+        <KcPageStory
+            kcContext={{
+                message: {
+                    type: "error",
+                    summary:
+                        "Federated identity returned by google is already linked to the current user."
+                }
+            }}
+        />
+    )
+};

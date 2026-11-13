@@ -23,12 +23,19 @@ export const Default: Story = {
                         lastName: { validators: {}, annotations: { inputType: "hidden" } },
                         email: {
                             value: "jordan.rivera@gmail.com",
-                            readOnly: true,
+                            readOnly: false,
                             validators: {},
                             annotations: {}
                         },
                         password: { validators: {}, annotations: { inputType: "hidden" } },
-                        "password-confirm": { validators: {}, annotations: { inputType: "hidden" } }
+                        "password-confirm": { validators: {}, annotations: { inputType: "hidden" } },
+                        termsAccepted: {
+                            name: "termsAccepted",
+                            value: "",
+                            required: true,
+                            validators: {},
+                            annotations: {}
+                        }
                     }
                 }
             }}
