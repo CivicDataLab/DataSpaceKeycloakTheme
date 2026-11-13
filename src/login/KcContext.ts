@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
-import type { ExtendKcContext } from "keycloakify/login";
+import type { ExtendKcContext, PasswordPolicies } from "keycloakify/login/KcContext";
 import type { KcEnvName, ThemeName } from "../kc.gen";
 
 export type KcContextExtension = {
@@ -12,6 +12,9 @@ export type KcContextExtension = {
 
 export type KcContextExtensionPerPage = {
     "signed-in.ftl": {};
+    "login-update-password.ftl": {
+        passwordPolicies?: PasswordPolicies;
+    };
     "register.ftl": {
         social?: {
             displayInfo?: boolean;

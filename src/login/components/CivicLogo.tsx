@@ -1,11 +1,11 @@
 import React from "react";
-import logoPngUrl from "../assets/dataspacelogosep2025.png";
+import logoUrl from "../assets/civicdataspace-logo-v2.svg";
 
 export const CivicLogo: React.FC = () => {
   return (
     <div className="civic-brand-logo">
       <img 
-        src={logoPngUrl}
+        src={logoUrl}
         alt="Civic DataSpace Logo" 
         style={{ maxWidth: '400px', width: '100%', height: 'auto' }}
       />

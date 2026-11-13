@@ -1,4 +1,4 @@
-import { useEffect, useRef, Fragment } from "react";
+import { useEffect, useRef, Fragment, type ReactNode } from "react";
 import { assert } from "keycloakify/tools/assert";
 import type { KcClsx } from "keycloakify/login/lib/kcClsx";
 import {
@@ -13,10 +13,14 @@ import type { KcContext } from "./KcContext";
 import type { I18n } from "./i18n";
 import { IconChevronDown } from "@tabler/icons-react";
 import PasswordWrapper from "./components/PasswordWrapper";
+import PasswordRequirements, { getPasswordRules } from "./components/PasswordRequirements";
 import FieldErrorIcon from "./components/FieldErrorIcon";
+import { getAppHomeUrl, getPrivacyPolicyUrl } from "./appHome";
 
 type ProfileFormFieldsProps = UserProfileFormFieldsProps<KcContext, I18n> & {
     shouldRevealErrors?: boolean;
+    /** Register owns the visible checkbox. Other pages draw it here when the realm sends the attribute. */
+    termsAccepted?: boolean;
 };
 
 export default function UserProfileFormFields(props: ProfileFormFieldsProps) {
@@ -28,10 +32,14 @@ export default function UserProfileFormFields(props: ProfileFormFieldsProps) {
         doMakeUserConfirmPassword,
         BeforeField,
         AfterField,
-        shouldRevealErrors = false
+        shouldRevealErrors = false,
+        termsAccepted
     } = props;
 
-    const { advancedMsg } = i18n;
+    const { advancedMsg, msgStr } = i18n;
+    const passwordPolicies = "passwordPolicies" in kcContext ? kcContext.passwordPolicies : undefined;
+    const loginUrl = kcContext.url.loginUrl;
+    const lockEmail = kcContext.pageId === "idp-review-user-profile.ftl";
 
     const {
         formState: { formFieldStates, isFormSubmittable },
@@ -48,6 +56,28 @@ export default function UserProfileFormFields(props: ProfileFormFieldsProps) {
     useEffect(() => {
         onIsFormSubmittableValueChange(isFormSubmittable);
     }, [isFormSubmittable]);
+
+    useEffect(() => {
+        if (termsAccepted === undefined) {
+            return;
+        }
+
+        const field = formFieldStatesRef.current.find(({ attribute }) => attribute.name === "termsAccepted");
+        if (field === undefined || Array.isArray(field.valueOrValues)) {
+            return;
+        }
+
+        const nextValue = termsAccepted ? "on" : "";
+        if (field.valueOrValues === nextValue) {
+            return;
+        }
+
+        dispatchFormAction({
+            action: "update",
+            name: "termsAccepted",
+            valueOrValues: nextValue
+        });
+    }, [termsAccepted, dispatchFormAction]);
 
     useEffect(() => {
         if (!shouldRevealErrors) {
@@ -83,6 +113,33 @@ export default function UserProfileFormFields(props: ProfileFormFieldsProps) {
     return (
         <>
             {orderedFields.map(({ attribute, displayableErrors, valueOrValues }) => {
+                if (attribute.name === "termsAccepted") {
+                    if (termsAccepted !== undefined) {
+                        return <Fragment key={attribute.name} />;
+                    }
+
+                    return (
+                        <TermsAcceptedField
+                            key={attribute.name}
+                            attribute={attribute}
+                            valueOrValues={valueOrValues}
+                            displayableErrors={displayableErrors}
+                            dispatchFormAction={dispatchFormAction}
+                            kcClsx={kcClsx}
+                        />
+                    );
+                }
+
+                const passwordValue = typeof valueOrValues === "string" ? valueOrValues : "";
+                const passwordRules =
+                    attribute.name === "password" ? getPasswordRules(passwordValue, passwordPolicies) : [];
+                const describedBy = [
+                    passwordRules.length > 0 ? "password-requirements" : undefined,
+                    displayableErrors.length > 0 ? `input-error-${attribute.name}` : undefined
+                ]
+                    .filter(id => id !== undefined)
+                    .join(" ");
+
                 return (
                     <Fragment key={attribute.name}>
                         <GroupLabel attribute={attribute} groupNameRef={groupNameRef} i18n={i18n} kcClsx={kcClsx} />
@@ -133,8 +190,29 @@ export default function UserProfileFormFields(props: ProfileFormFieldsProps) {
                                     dispatchFormAction={dispatchFormAction}
                                     kcClsx={kcClsx}
                                     i18n={i18n}
+                                    ariaDescribedBy={describedBy === "" ? undefined : describedBy}
+                                    loginUrl={loginUrl}
+                                    emailExistsMessage={msgStr("emailExistsMessage")}
+                                    passwordConfirmMessage={msgStr("invalidPasswordConfirmMessage")}
+                                    locked={lockEmail && attribute.name === "email" && (attribute.value ?? "") !== ""}
                                 />
-                                <FieldErrors attribute={attribute} displayableErrors={displayableErrors} kcClsx={kcClsx} fieldIndex={undefined} />
+                                {passwordRules.length > 0 && (
+                                    <PasswordRequirements
+                                        password={passwordValue}
+                                        rules={passwordRules}
+                                        showInvalid={displayableErrors.length > 0 && passwordValue !== ""}
+                                    />
+                                )}
+                                <FieldErrors
+                                    attribute={attribute}
+                                    displayableErrors={displayableErrors}
+                                    kcClsx={kcClsx}
+                                    fieldIndex={undefined}
+                                    valueOrValues={valueOrValues}
+                                    loginUrl={loginUrl}
+                                    emailExistsMessage={msgStr("emailExistsMessage")}
+                                    passwordConfirmMessage={msgStr("invalidPasswordConfirmMessage")}
+                                />
                                 {attribute.annotations.inputHelperTextAfter !== undefined && (
                                     <div
                                         className={kcClsx("kcInputHelperTextAfterClass")}
@@ -224,14 +302,32 @@ function GroupLabel(props: {
     return null;
 }
 
-function FieldErrors(props: { attribute: Attribute; displayableErrors: FormFieldError[]; fieldIndex: number | undefined; kcClsx: KcClsx }) {
-    const { attribute, fieldIndex, kcClsx } = props;
+function FieldErrors(props: {
+    attribute: Attribute;
+    displayableErrors: FormFieldError[];
+    fieldIndex: number | undefined;
+    kcClsx: KcClsx;
+    valueOrValues: string | string[];
+    loginUrl: string;
+    emailExistsMessage: string;
+    passwordConfirmMessage: string;
+}) {
+    const { attribute, fieldIndex, kcClsx, valueOrValues, loginUrl, emailExistsMessage, passwordConfirmMessage } = props;
 
     const displayableErrors = props.displayableErrors.filter(error => error.fieldIndex === fieldIndex);
 
     if (displayableErrors.length === 0) {
         return null;
     }
+
+    const replacement = fieldErrorReplacement({
+        attributeName: attribute.name,
+        errors: displayableErrors,
+        valueOrValues,
+        loginUrl,
+        emailExistsMessage,
+        passwordConfirmMessage
+    });
 
     return (
         <span
@@ -241,9 +337,8 @@ function FieldErrors(props: { attribute: Attribute; displayableErrors: FormField
         >
             <FieldErrorIcon />
             <span>
-                {displayableErrors
-                    .filter(error => error.fieldIndex === fieldIndex)
-                    .map(({ errorMessage }, i, arr) => (
+                {replacement ??
+                    displayableErrors.map(({ errorMessage }, i, arr) => (
                         <Fragment key={i}>
                             {errorMessage}
                             {arr.length - 1 !== i && <br />}
@@ -254,6 +349,104 @@ function FieldErrors(props: { attribute: Attribute; displayableErrors: FormField
     );
 }
 
+function fieldErrorReplacement(params: {
+    attributeName: string;
+    errors: FormFieldError[];
+    valueOrValues: string | string[];
+    loginUrl: string;
+    emailExistsMessage: string;
+    passwordConfirmMessage: string;
+}): ReactNode | undefined {
+    const { attributeName, errors, valueOrValues, loginUrl, emailExistsMessage, passwordConfirmMessage } = params;
+    const value = typeof valueOrValues === "string" ? valueOrValues : "";
+
+    if (attributeName === "password") {
+        // Keycloak never sends the password back, so after a server rejection the field is empty
+        // even though the user typed one. Only a server "please specify" means it was missing.
+        const serverErrors = errors.filter(error => error.source.type === "server");
+        const serverRejected =
+            serverErrors.length > 0 &&
+            !serverErrors.some(error => /specify password|required/i.test(plainMessage(error.errorMessageStr)));
+        return value === "" && !serverRejected ? "Password is required." : "Password does not meet all requirements.";
+    }
+
+    if (attributeName === "password-confirm") {
+        const mismatch = errors.some(
+            error =>
+                (error.source.type === "other" && error.source.rule === "passwordConfirmMatchesPassword") ||
+                plainMessage(error.errorMessageStr).includes(passwordConfirmMessage)
+        );
+        if (mismatch) {
+            return "Passwords do not match.";
+        }
+        if (value === "") {
+            return "Password is required.";
+        }
+    }
+
+    if (attributeName === "email" && errors.some(error => plainMessage(error.errorMessageStr).includes(emailExistsMessage))) {
+        return (
+            <>
+                An account already exists with this email. <a href={loginUrl}>Sign in instead</a>.
+            </>
+        );
+    }
+
+    return undefined;
+}
+
+function plainMessage(message: string) {
+    return message.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function TermsAcceptedField(props: {
+    attribute: Attribute;
+    valueOrValues: string | string[];
+    displayableErrors: FormFieldError[];
+    dispatchFormAction: (action: FormAction) => void;
+    kcClsx: KcClsx;
+}) {
+    const { attribute, valueOrValues, displayableErrors, dispatchFormAction, kcClsx } = props;
+    const checked = valueOrValues === "on";
+    const privacyHref = getPrivacyPolicyUrl(getAppHomeUrl()) ?? "/privacy";
+    const describedBy = displayableErrors.length > 0 ? "input-error-termsAccepted" : undefined;
+
+    return (
+        <div className="form-group civic-terms">
+            <input
+                type="checkbox"
+                id={attribute.name}
+                name={attribute.name}
+                value="on"
+                checked={checked}
+                aria-invalid={displayableErrors.length > 0}
+                aria-labelledby={`${attribute.name}-label`}
+                aria-describedby={describedBy}
+                onChange={event =>
+                    dispatchFormAction({
+                        action: "update",
+                        name: attribute.name,
+                        valueOrValues: event.target.checked ? "on" : ""
+                    })
+                }
+            />
+            <p id={`${attribute.name}-label`}>
+                I acknowledge the{" "}
+                <a href={privacyHref} target="_blank" rel="noopener noreferrer">
+                    Privacy Policy
+                </a>
+                .
+            </p>
+            {displayableErrors.length > 0 && (
+                <span id="input-error-termsAccepted" className={kcClsx("kcInputErrorMessageClass")} aria-live="polite">
+                    <FieldErrorIcon />
+                    <span>Please acknowledge the Privacy Policy to continue.</span>
+                </span>
+            )}
+        </div>
+    );
+}
+
 type InputFieldByTypeProps = {
     attribute: Attribute;
     valueOrValues: string | string[];
@@ -261,6 +454,12 @@ type InputFieldByTypeProps = {
     dispatchFormAction: React.Dispatch<FormAction>;
     i18n: I18n;
     kcClsx: KcClsx;
+    ariaDescribedBy?: string;
+    loginUrl: string;
+    emailExistsMessage: string;
+    passwordConfirmMessage: string;
+    /** Keep the posted value, but do not let the user change it. */
+    locked?: boolean;
 };
 
 function InputFieldByType(props: InputFieldByTypeProps) {
@@ -336,7 +535,10 @@ function InputTag(props: InputFieldByTypeProps & { fieldIndex: number | undefine
                 })()}
                 className={kcClsx("kcInputClass")}
                 aria-invalid={displayableErrors.find(error => error.fieldIndex === fieldIndex) !== undefined}
-                disabled={attribute.readOnly}
+                aria-describedby={props.ariaDescribedBy}
+                readOnly={props.locked === true}
+                aria-readonly={props.locked === true ? true : undefined}
+                disabled={attribute.readOnly && props.locked !== true}
                 autoComplete={attribute.autocomplete}
                 placeholder={
                     attribute.annotations.inputTypePlaceholder !== undefined
@@ -361,7 +563,11 @@ function InputTag(props: InputFieldByTypeProps & { fieldIndex: number | undefine
                 min={attribute.annotations.inputTypeMin}
                 step={attribute.annotations.inputTypeStep}
                 {...Object.fromEntries(Object.entries(attribute.html5DataAnnotations ?? {}).map(([key, value]) => [`data-${key}`, value]))}
-                onChange={event =>
+                onChange={event => {
+                    if (props.locked) {
+                        return;
+                    }
+
                     dispatchFormAction({
                         action: "update",
                         name: attribute.name,
@@ -380,8 +586,8 @@ function InputTag(props: InputFieldByTypeProps & { fieldIndex: number | undefine
 
                             return event.target.value;
                         })()
-                    })
-                }
+                    });
+                }}
                 onBlur={() =>
                     dispatchFormAction({
                         action: "focus lost",
@@ -401,7 +607,16 @@ function InputTag(props: InputFieldByTypeProps & { fieldIndex: number | undefine
 
                 return (
                     <>
-                        <FieldErrors attribute={attribute} kcClsx={kcClsx} displayableErrors={displayableErrors} fieldIndex={fieldIndex} />
+                        <FieldErrors
+                            attribute={attribute}
+                            kcClsx={kcClsx}
+                            displayableErrors={displayableErrors}
+                            fieldIndex={fieldIndex}
+                            valueOrValues={valueOrValues}
+                            loginUrl={props.loginUrl}
+                            emailExistsMessage={props.emailExistsMessage}
+                            passwordConfirmMessage={props.passwordConfirmMessage}
+                        />
                         <AddRemoveButtonsMultiValuedAttribute
                             attribute={attribute}
                             values={values}

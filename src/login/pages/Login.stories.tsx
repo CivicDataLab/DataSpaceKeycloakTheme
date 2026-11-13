@@ -33,6 +33,19 @@ export const Default: Story = {
     )
 };
 
+export const WithResetEmailSent: Story = {
+    render: () => (
+        <KcPageStory
+            kcContext={{
+                message: {
+                    type: "success",
+                    summary: "You should receive an email shortly with further instructions."
+                }
+            }}
+        />
+    )
+};
+
 export const WithInvalidCredential: Story = {
     render: () => (
         <KcPageStory
