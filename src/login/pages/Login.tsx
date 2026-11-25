@@ -22,7 +22,6 @@ export default function Login(props: PageProps<Extract<KcContext, { pageId: "log
 
     const { social, realm, url, usernameHidden, login, auth, registrationDisabled, messagesPerField, message } = kcContext;
 
-
     const { msg } = i18n;
 
     const [isLoginButtonDisabled, setIsLoginButtonDisabled] = useState(false);
@@ -172,7 +171,6 @@ export default function Login(props: PageProps<Extract<KcContext, { pageId: "log
                                         </span>
                                     </label>
                                     <input
-                                       
                                         id="username"
                                         className={kcClsx("kcInputClass")}
                                         name="username"
@@ -202,7 +200,6 @@ export default function Login(props: PageProps<Extract<KcContext, { pageId: "log
                                     {realm.resetPasswordAllowed && (
                                         <a
                                             className="civic-forgot-link"
-                                           
                                             href={url.loginResetCredentialsUrl}
                                             onClick={() => {
                                                 const value = (
@@ -225,7 +222,6 @@ export default function Login(props: PageProps<Extract<KcContext, { pageId: "log
                                 </div>
                                 <PasswordWrapper kcClsx={kcClsx} i18n={i18n} passwordInputId="password">
                                     <input
-                                       
                                         id="password"
                                         className={kcClsx("kcInputClass")}
                                         name="password"
@@ -245,7 +241,6 @@ export default function Login(props: PageProps<Extract<KcContext, { pageId: "log
                             <div id="kc-form-buttons" className={kcClsx("kcFormGroupClass")}>
                                 <input type="hidden" id="id-hidden-input" name="credentialId" value={auth.selectedCredential} />
                                 <input
-                                   
                                     disabled={isLoginButtonDisabled}
                                     className={kcClsx("kcButtonClass", "kcButtonPrimaryClass", "kcButtonBlockClass", "kcButtonLargeClass")}
                                     name="login"
