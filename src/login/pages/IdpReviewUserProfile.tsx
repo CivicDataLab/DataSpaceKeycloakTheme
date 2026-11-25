@@ -48,10 +48,12 @@ export default function IdpReviewUserProfile(props: IdpReviewUserProfileProps) {
                         AfterField={({ attribute }) =>
                             attribute.name === "email" ? (
                                 <>
-                                    <span className="civic-verified-badge">
-                                        <IconCheck size={14} stroke={2.25} aria-hidden />
-                                        Verified
-                                    </span>
+                                    {(attribute.value ?? "") !== "" && (
+                                        <span className="civic-verified-badge">
+                                            <IconCheck size={14} stroke={2.25} aria-hidden />
+                                            Verified
+                                        </span>
+                                    )}
                                     <a className="civic-forgot-link" href={url.loginRestartFlowUrl}>
                                         Use a different Google account
                                     </a>

@@ -12,13 +12,31 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-export const AccountVerified: Story = {
+export const RequiredAction: Story = {
     render: () => (
         <KcPageStory
             kcContext={{
+                messageHeader: "",
+                requiredActions: ["UPDATE_PASSWORD"],
+                actionUri: "https://example.com/required-action",
                 message: {
-                    type: "success",
-                    summary: "Your Google account is now connected to CivicDataSpace."
+                    type: "info",
+                    summary: "Perform the following action(s)"
+                }
+            }}
+        />
+    )
+};
+
+export const EmailAlreadyVerified: Story = {
+    render: () => (
+        <KcPageStory
+            kcContext={{
+                messageHeader: "",
+                actionUri: "",
+                message: {
+                    type: "info",
+                    summary: "Your email address has been verified already."
                 }
             }}
         />

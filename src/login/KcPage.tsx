@@ -22,6 +22,8 @@ const Info = lazy(() => import("./pages/Info"));
 const SignedIn = lazy(() => import("./pages/SignedIn"));
 const IdpReviewUserProfile = lazy(() => import("./pages/IdpReviewUserProfile"));
 const LoginResetPassword = lazy(() => import("./pages/LoginResetPassword"));
+const LoginUpdatePassword = lazy(() => import("./pages/LoginUpdatePassword"));
+const Terms = lazy(() => import("./pages/Terms"));
 const Register = lazy(() => import("./pages/Register"));
 const UserProfileFormFields = lazy(() => import("./UserProfileFormFields"));
 
@@ -35,6 +37,7 @@ export default function KcPage(props: { kcContext: KcContext }) {
     const Template = (templateProps: {
         children?: ReactNode;
         displayMessage?: boolean;
+        displayInfo?: boolean;
         socialProvidersNode?: ReactNode;
         infoNode?: ReactNode;
         headerNode?: ReactNode;
@@ -42,6 +45,7 @@ export default function KcPage(props: { kcContext: KcContext }) {
         <CustomTemplate
             kcContext={kcContext}
             displayMessage={templateProps.displayMessage}
+            displayInfo={templateProps.displayInfo}
             socialProvidersNode={templateProps.socialProvidersNode}
             infoNode={templateProps.infoNode}
             headerNode={templateProps.headerNode}
@@ -129,6 +133,26 @@ export default function KcPage(props: { kcContext: KcContext }) {
                     case "login-reset-password.ftl":
                         return (
                             <LoginResetPassword
+                                kcContext={kcContext}
+                                i18n={i18n}
+                                classes={classes}
+                                Template={Template}
+                                doUseDefaultCss={true}
+                            />
+                        );
+                    case "login-update-password.ftl":
+                        return (
+                            <LoginUpdatePassword
+                                kcContext={kcContext}
+                                i18n={i18n}
+                                classes={classes}
+                                Template={Template}
+                                doUseDefaultCss={true}
+                            />
+                        );
+                    case "terms.ftl":
+                        return (
+                            <Terms
                                 kcContext={kcContext}
                                 i18n={i18n}
                                 classes={classes}
