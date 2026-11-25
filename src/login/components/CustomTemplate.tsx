@@ -1,5 +1,6 @@
 import React from "react";
 import { IconAlertCircle, IconArrowLeft, IconInfoCircle } from "@tabler/icons-react";
+import { kcSanitize } from "keycloakify/lib/kcSanitize";
 import { getAppHomeUrl, getPrivacyPolicyUrl } from "../appHome";
 import CivicLogo from "./CivicLogo";
 
@@ -19,6 +20,7 @@ type CustomTemplateProps = {
         };
     };
     displayMessage?: boolean;
+    displayInfo?: boolean;
 };
 
 export default function CustomTemplate({
@@ -27,7 +29,8 @@ export default function CustomTemplate({
     infoNode,
     headerNode,
     kcContext,
-    displayMessage = true
+    displayMessage = true,
+    displayInfo = true
 }: CustomTemplateProps) {
     const homeHref = getAppHomeUrl() ?? kcContext.client?.baseUrl ?? "/";
     const privacyHref = getPrivacyPolicyUrl(homeHref);
@@ -62,7 +65,7 @@ export default function CustomTemplate({
                                 <span
                                     className="pf-c-alert__title"
                                     dangerouslySetInnerHTML={{
-                                        __html: kcContext.message.summary
+                                        __html: kcSanitize(kcContext.message.summary)
                                     }}
                                 />
                             </div>
@@ -75,8 +78,13 @@ export default function CustomTemplate({
                         {socialProvidersNode}
 
                         {/* Info Section (e.g., registration link) */}
-                        {infoNode}
+                        {displayInfo && infoNode}
                     </div>
+                    </div>
+                    <div className="civic-mobile-legal">
+                        <a href={privacyHref ?? "/privacy"} target="_blank" rel="noopener noreferrer">
+                            Privacy
+                        </a>
                     </div>
                 </div>
 

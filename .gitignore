@@ -55,3 +55,22 @@ jspm_packages
 /dist_keycloak
 /build
 /storybook-static
+
+# Markdown notes stay local
+*.md
+
+# Local agent review guides
+/accessibility.md
+/code-quality.md
+/craft-standard.md
+/qc.md
+/qa-testing.md
+/safety-review.md
+
+# QC agents and the slash command stay in git
+!.cursor/
+!.cursor/**/
+!.cursor/**/*.md
+
+# Local theme jar copies - build output, never commit
+theme-update.jar
