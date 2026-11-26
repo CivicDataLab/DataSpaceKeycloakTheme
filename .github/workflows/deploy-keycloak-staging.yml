@@ -15,6 +15,20 @@ on:
   push:
     branches:
       - main
+    # Documentation changes must not redeploy production. Merging a README edit
+    # rebuilt the image and restarted Keycloak on 2026-09-08 -- harmless, but it
+    # is a needless restart of the auth server every product depends on, and it
+    # buries real deploys among cosmetic ones in the run history.
+    #
+    # Only paths that cannot affect the built image or the deployment are listed.
+    # Anything under src/, deploy/, .github/workflows/, package.json or the
+    # Dockerfile still deploys.
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - '.gitignore'
+      - 'docs/**'
+      - '.vscode/**'
   workflow_dispatch:
     inputs:
       ref:
@@ -149,11 +163,20 @@ jobs:
     name: Deploy to production
     needs: build
     runs-on: ubuntu-latest
-    # Kept as keycloak-staging on purpose: EC2_HOST, EC2_USERNAME and
-    # EC2_PRIVATE_KEY are scoped to this environment, and GitHub cannot rename an
-    # environment while preserving its secrets. Renaming would strip the deploy's
-    # SSH key. Rename only alongside re-adding those three secrets.
-    environment: keycloak-staging
+    # keycloak-production, not keycloak-staging: auth.civicdatalab.in serves
+    # production auth for every CivicDataLab product.
+    #
+    # DO NOT point this back at keycloak-staging. That environment still exists
+    # but its secrets are now placeholders -- it is being kept to be repurposed
+    # for a real staging server later. Switching to it would not fail loudly;
+    # appleboy/ssh-action reports a bad key as an opaque handshake error, not as
+    # "wrong credentials", so it would look like a broken box rather than a
+    # misrouted environment.
+    #
+    # GitHub cannot move secrets between environments, so a future change here
+    # means adding EC2_HOST, EC2_USERNAME and EC2_PRIVATE_KEY to the target
+    # environment FIRST, then switching.
+    environment: keycloak-production
     timeout-minutes: 15
     permissions:
       contents: read
