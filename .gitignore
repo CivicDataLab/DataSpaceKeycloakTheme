@@ -56,6 +56,25 @@ jspm_packages
 /build
 /storybook-static
 
+# Markdown notes stay local
+*.md
+
+# Local agent review guides
+/accessibility.md
+/code-quality.md
+/craft-standard.md
+/qc.md
+/qa-testing.md
+/safety-review.md
+
+# QC agents and the slash command stay in git
+!.cursor/
+!.cursor/**/
+!.cursor/**/*.md
+
+# Local theme jar copies - build output, never commit
+theme-update.jar
+
 # ── Secrets and credentials ───────────────────────────────────────────────
 # Deliberately explicit. Nothing sensitive has ever been committed here (634
 # commits scanned before this repo went public: no .env, no key material, no

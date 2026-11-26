@@ -14,6 +14,8 @@ import FieldErrorIcon from "../components/FieldErrorIcon";
 
 type RegisterUserProfileFormFieldsProps = UserProfileFormFieldsProps & {
     shouldRevealErrors?: boolean;
+    /** When set, this page owns the consent checkbox and the profile field must not draw a second one. */
+    termsAccepted?: boolean;
 };
 
 type RegisterProps = PageProps<Extract<KcContext, { pageId: "register.ftl" }>, I18n> & {
@@ -146,6 +148,7 @@ export default function Register(props: RegisterProps) {
                     onIsFormSubmittableValueChange={setIsFormSubmittable}
                     doMakeUserConfirmPassword={doMakeUserConfirmPassword}
                     shouldRevealErrors={shouldRevealErrors}
+                    termsAccepted={areTermsAccepted}
                 />
                 <div className="form-group civic-terms">
                     <input
@@ -153,12 +156,14 @@ export default function Register(props: RegisterProps) {
                         type="checkbox"
                         id="termsAccepted"
                         name="termsAccepted"
+                        value="on"
                         checked={areTermsAccepted}
                         onChange={event => setAreTermsAccepted(event.target.checked)}
                         aria-invalid={showTermsError}
+                        aria-labelledby="termsAccepted-label"
                         aria-describedby={showTermsError ? "input-error-termsAccepted" : undefined}
                     />
-                    <p>
+                    <p id="termsAccepted-label">
                         I acknowledge the{" "}
                         <a href={privacyHref} target="_blank" rel="noopener noreferrer">
                             Privacy Policy

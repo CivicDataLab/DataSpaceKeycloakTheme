@@ -30,11 +30,16 @@ export const Default: Story = {
                         }
                     ]
                 },
+                passwordPolicies: {
+                    length: 8,
+                    upperCase: 1,
+                    digits: 1
+                },
                 profile: {
                     attributesByName: {
                         username: { annotations: { inputType: "hidden" } },
-                        firstName: { annotations: { inputType: "hidden" } },
-                        lastName: { annotations: { inputType: "hidden" } }
+                        firstName: { required: true },
+                        lastName: { required: true }
                     }
                 }
             }}
@@ -219,6 +224,26 @@ export const WithPasswordMinLength8: Story = {
             kcContext={{
                 passwordPolicies: {
                     length: 8
+                }
+            }}
+        />
+    )
+};
+
+/** A realm rule the checklist cannot show: Keycloak's own message is kept */
+export const WithPasswordNotUsernameError: Story = {
+    render: () => (
+        <KcPageStory
+            kcContext={{
+                passwordPolicies: {
+                    length: 8,
+                    upperCase: 1,
+                    digits: 1
+                },
+                messagesPerField: {
+                    existsError: (fieldName: string) => fieldName === "password",
+                    get: (fieldName: string) =>
+                        fieldName === "password" ? "Invalid password: must not be equal to the username." : ""
                 }
             }}
         />
